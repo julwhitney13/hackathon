@@ -40,50 +40,8 @@ function move_character_towards_cursor(character, mouseX, mouseY){
    }
 }
 
-var keys = {
-    left: false,
-    right: false,
-    up: false,
-    down: false
-};
-
 var width   = 500;
 var height  = 500;
-
-document.addEventListener("keydown", function(e) {
-    switch (e.keyCode) {
-        case 37:
-            keys.left = true;
-            break;
-        case 38:
-            keys.up = true;
-            break;
-        case 39:
-            keys.right = true;
-            break;
-        case 40:
-            keys.down = true;
-            break;
-    }
-});
-
-document.addEventListener("keyup", function(e) {
-    switch (e.keyCode) {
-        case 37:
-            keys.left = false;
-            break;
-        case 38:
-            keys.up = false;
-            break;
-        case 39:
-            keys.right = false;
-            break;
-        case 40:
-            keys.down = false;
-            break;
-    }
-});
-
 
 document.addEventListener("DOMContentLoaded", function() {
     // get canvas element and create context
@@ -118,15 +76,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // main loop, running every 25ms
     function mainLoop() {
-        // Calculate new location
-        dx = keys.left ? -10 : 0;
-        dx += keys.right ? 10 : 0;
-
-        dy = keys.down ? -10 : 0;
-        dy += keys.up ? 10 : 0;
-
-        move_character(character, character.pos.x += dx, character.pos.y += dy);
-
         if (character.move) {
             move_character_towards_cursor(character, character.move_to.x, character.move_to.y);
         }
