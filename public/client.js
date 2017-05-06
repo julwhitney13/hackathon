@@ -1,7 +1,7 @@
 function draw_circle(canvas, x, y) {
     canvas.beginPath();
     canvas.arc(x, y, 5, 0, 2 * Math.PI, false);
-    canvas.closePath()
+    canvas.closePath();
     canvas.fillStyle = 'green';
     canvas.fill();
     canvas.lineWidth = 5;
@@ -16,7 +16,7 @@ var keys = {
     down: false
 };
 
-document.addEventListener("onkeydown", function(e) {
+document.addEventListener("keydown", function(e) {
     switch (e.keyCode) {
         case 37:
             keys.left = true;
@@ -25,14 +25,15 @@ document.addEventListener("onkeydown", function(e) {
             keys.up = true;
             break;
         case 39:
-            key.right = true;
+            keys.right = true;
             break;
         case 40:
-            key.down = true;
+            keys.down = true;
+            break;
     }
 });
 
-document.addEventListener("onkeyup", function(e) {
+document.addEventListener("keyup", function(e) {
     switch (e.keyCode) {
         case 37:
             keys.left = false;
@@ -41,10 +42,11 @@ document.addEventListener("onkeyup", function(e) {
             keys.up = false;
             break;
         case 39:
-            key.right = false;
+            keys.right = false;
             break;
         case 40:
-            key.down = false;
+            keys.down = false;
+            break;
     }
 });
 
@@ -52,8 +54,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // get canvas element and create context
     var canvas  = document.getElementById('game');
     var context = canvas.getContext('2d');
-    var width   = 2000;
-    var height  = 2000;
+    var width   = 500;
+    var height  = 500;
     var socket  = io.connect();
 
     // set canvas to full browser width/height
@@ -62,12 +64,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
     var character = {
         id: false,
-        pos: false
+        pos: {x:0, y:0}
     };
 
     // draw line received from server
     socket.on('update_characters', function (all_characters) {
         context.clearRect(0, 0, canvas.width, canvas.height); // Clear out the canvas
+        console.log("update character");
         for (var i in all_characters) {
             draw_circle(context, all_characters[i].x, all_characters[i].y);
         }
@@ -76,22 +79,26 @@ document.addEventListener("DOMContentLoaded", function() {
     // main loop, running every 25ms
     function mainLoop() {
         // Calculate new location
-        dx = keys.left ? -1 : 0;
-        dx += keys.right ? 1 : 0;
+        dx = keys.left ? -10 : 0;
+        dx += keys.right ? 10 : 0;
 
-        dy = keys.down ? -1 : 0;
-        dy += keys.up ? 1 : 0;
+        dy = keys.down ? -10 : 0;
+        dy += keys.up ? 10 : 0;
 
         character.pos.x += dx;
         character.pos.y += dy;
 
-        socket.emit('move_character');
+        console.log(character.pos.x);
+        console.log(character.pos.y);
+
+        socket.emit('move_character', character);
         setTimeout(mainLoop, 25);
     }
 
     socket.on('init_character', function(data) {
         character.id = data.id;
-        character.pos = data.position;
+        character.pos.x = data.pos.x;
+        character.pos.y = data.pos.y;
         mainLoop();
     });
 });

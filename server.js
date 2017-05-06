@@ -20,15 +20,15 @@ var characterHistory = [];
 // event-handler for new incoming connections
 io.on('connection', function (socket) {
 
-   characterHistory.push({x:((Math.random()*1990)+5),y:((Math.random()*1990)+5)});
-   socket.emit('init_character', {id:characterHistory.length-1,position:characterHistory[characterHistory.length-1]});
+   characterHistory.push({x: ((Math.random()*1990)+5), y: ((Math.random()*1990)+5)});
+   socket.emit('init_character', {id: characterHistory.length-1, pos: characterHistory[characterHistory.length-1]});
    // first send the history to the new client
    socket.emit('update_characters', characterHistory);
 
    // add handler for message type "draw_line".
    socket.on('move_character', function (data) {
       // add received line to history
-      characterHistory[data.id]=data.position
+      characterHistory[data.id]={x: data.pos.x, y: data.pos.y};
       // send line to all clients
       io.emit('update_characters', characterHistory);
    });
