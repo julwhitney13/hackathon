@@ -9,12 +9,46 @@ function draw_circle(canvas, x, y) {
     canvas.stroke();
 }
 
+function move_character(character, new_x, new_y) {
+    if (new_x >= width) {
+        character.pos.x = width;
+    } else if (new_x <= -100) {
+        character.pos.x = 0;
+    } else {
+        character.pos.x = new_x;
+    }
+
+    if (new_y >= height) {
+        character.pos.y = height;
+    } else if (new_y <= -100) {
+        character.pos.y = 0;
+    } else {
+        character.pos.y = new_y;
+    }
+}
+
+function move_character_towards_cursor(character, mouseX, mouseY){
+    character.move_to.x = mouseX;
+    character.move_to.y = mouseY;
+   var xDistance = mouseX - character.pos.x;
+   var yDistance = mouseY - character.pos.y;
+   var distance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+   if (distance > 1) {
+        var new_pos_x = character.pos.x + xDistance * 0.015;
+        var new_pos_y = character.pos.y + yDistance * 0.015;
+        move_character(character, new_pos_x, new_pos_y);
+   }
+}
+
 var keys = {
     left: false,
     right: false,
     up: false,
     down: false
 };
+
+var width   = 500;
+var height  = 500;
 
 document.addEventListener("keydown", function(e) {
     switch (e.keyCode) {
@@ -50,12 +84,11 @@ document.addEventListener("keyup", function(e) {
     }
 });
 
+
 document.addEventListener("DOMContentLoaded", function() {
     // get canvas element and create context
     var canvas  = document.getElementById('game');
     var context = canvas.getContext('2d');
-    var width   = 500;
-    var height  = 500;
     var socket  = io.connect();
 
     // set canvas to full browser width/height
@@ -63,8 +96,15 @@ document.addEventListener("DOMContentLoaded", function() {
     canvas.height = height;
 
     var character = {
+        move: false,
+        move_to: {x:0, y:0},
         id: false,
         pos: {x:0, y:0}
+    };
+
+    canvas.onmousemove = function(e) {
+        move_character_towards_cursor(character, e.clientX, e.clientY);
+        character.move = true;
     };
 
     // draw line received from server
@@ -85,8 +125,11 @@ document.addEventListener("DOMContentLoaded", function() {
         dy = keys.down ? -10 : 0;
         dy += keys.up ? 10 : 0;
 
-        character.pos.x += dx;
-        character.pos.y += dy;
+        move_character(character, character.pos.x += dx, character.pos.y += dy);
+
+        if (character.move) {
+            move_character_towards_cursor(character, character.move_to.x, character.move_to.y);
+        }
 
         console.log(character.pos.x);
         console.log(character.pos.y);
