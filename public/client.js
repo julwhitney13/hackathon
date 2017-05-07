@@ -22,7 +22,7 @@ function draw_turtle(context, x, y, angle) {
   context.save();
 
   //Set the origin to the center of the image
-  context.translate(x + imageWidth / 2, y + imageHeight / 2);
+  context.translate(x, y);
   //Rotate the canvas around the origin
   context.rotate(angle);
   //draw the image
@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         draw_view(context, character);
         // Draw myself.
-        draw_turtle(context, character.pos.x, character.pos.y, character.angle);
+        draw_turtle(context, character.pos.x, character.pos.y, character.pos.angle);
         for (var i in all_characters) {
             other = all_characters[i];
             if (i != character.id && point_in_range(character, other.x, other.y)) {

@@ -50,8 +50,8 @@ io.on('connection', function (socket) {
      }
      for (var i=0; i < dead.length; i++) {
        socket.broadcast.to(dead[i]).emit( 'character_died', '');
-       characterHistory[data.id].score += 1
      }
+     characterHistory[data.id].score += dead.length;
    });
 
    characterHistory[socket.id] = {x: Math.floor((Math.random()*490)+5), y: Math.floor((Math.random()*490)+5), score:0, angle:0};
