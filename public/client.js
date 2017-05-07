@@ -1,11 +1,14 @@
-var width   = 1200;
-var height  = 600;
-var imageWidth = 30;
-var imageHeight = 50;
 var img= new Image();
 var view_radius = 130;
 var view_angle = Math.PI * 0.33;
-const deg90 = 1.5708
+const width = 1200;
+const height = 600;
+const imageWidth = 30;
+const imageHeight = 50;
+const deg90 = 1.5708;
+const border = 200;
+const mapWidth = 2400;
+const mapHeight = 1200;
 img.src = "https://image.ibb.co/bKH1ak/turlte4real.png";
 
 function draw_circle(context, x, y) {
@@ -94,66 +97,87 @@ function draw_view(canvas, character) {
 function move_character(character, new_x, new_y, viewOrigin) {
     //console.log("pos_x: " + character.pos.x.toString() + " new_x: " + new_x.toString());
     // X
-    var viewPortDelta = 0;
-    if ((new_x >= 1000) && ((viewOrigin.left + 1200) + (new_x - character.pos.x) < 2400) && (character.pos.x < new_x)) {
-        viewPortDelta = new_x - character.pos.x
-        character.pos.x = 1000;
-        viewOrigin.left += viewPortDelta;
+    var viewPortDeltaX = 0;
+    if ((new_x >= width-border) && ((viewOrigin.left + width) + (new_x - character.pos.x) < mapWidth) && (character.pos.x < new_x)) {
+        viewPortDeltaX = new_x - character.pos.x;
+        character.pos.x = width-border;
+        viewOrigin.left += viewPortDeltaX;
         console.log("XCase 1: ");
-        character.move_to.x -= viewPortDelta;
+        character.move_to.x -= viewPortDeltaX;
     }
-    else if ((new_x <= 200) && ((viewOrigin.left - (character.pos.x - new_x)) > 0) && (character.pos.x > new_x)) {
-        viewPortDelta = character.pos.x - new_x;
+    else if ((new_x <= border) && ((viewOrigin.left - (character.pos.x - new_x)) > 0) && (character.pos.x > new_x)) {
+        viewPortDeltaX = character.pos.x - new_x;
         console.log("XCase 2: " + (viewOrigin.left - (character.pos.x - new_x)).toString());
-        character.pos.x = 200;
-        viewOrigin.left -= viewPortDelta;
-        character.move_to.x += viewPortDelta;
+        character.pos.x = border;
+        viewOrigin.left -= viewPortDeltaX;
+        character.move_to.x += viewPortDeltaX;
     }
-    else if ((new_x >= 1000) && ((viewOrigin.left + 1200) + (new_x - character.pos.x) >= 2400)) {
-        viewPortDelta = 1200 - viewOrigin.left;
-        character.pos.x += (new_x - character.pos.x) - viewPortDelta;
-        viewOrigin.left = 1200;
-        character.move_to.x -= viewPortDelta;
+    else if ((new_x >= width-border) && ((viewOrigin.left + width) + (new_x - character.pos.x) >= mapWidth)) {
+        viewPortDeltaX = (mapWidth - width) - viewOrigin.left;
+        character.pos.x += (new_x - character.pos.x) - viewPortDeltaX;
+        viewOrigin.left = mapWidth - width;
+        character.move_to.x -= viewPortDeltaX;
         console.log("XCase 3:");
     }
-    else if ((new_x <= 200) && (viewOrigin.left - (character.pos.x - new_x) <= 0)) {
-        viewPortDelta = viewOrigin.left
-        character.pos.x = new_x - viewOrigin.left ;
+    else if ((new_x <= border) && (viewOrigin.left - (character.pos.x - new_x) <= 0)) {
+        viewPortDeltaX = viewOrigin.left;
+        character.pos.x = new_x - viewOrigin.left;
         viewOrigin.left = 0;
-        character.move_to.x += viewPortDelta;
+        character.move_to.x += viewPortDeltaX;
         console.log("XCase 4:");
     }
-    else if ((new_x < 1200) && (new_x > 0)) {
+    else if ((new_x < width) && (new_x > 0)) {
       character.pos.x = new_x;
       console.log("XCase 5: ");
     }
     else if (new_x <= 0) {
         character.pos.x = 0;
     }
-    else if (new_x >= 1200) {
-        character.pos.x = 1200;
+    else if (new_x >= width) {
+        character.pos.x = width;
     }
 
     // Y
-    if ((new_y >= 400) && ((viewOrigin.top + 600) + (new_y - character.pos.y) < 1200)) {
-        character.pos.y = 400;
-        viewOrigin.top += new_y - character.pos.y;
+    var viewPortDeltaY = 0;
+    if ((new_y >= height-border) && ((viewOrigin.top + height) + (new_y - character.pos.y) < mapHeight) && (character.pos.y < new_y)) {
+        viewPortDeltaY = new_y - character.pos.y;
+        character.pos.y = height-border;
+        viewOrigin.top += viewPortDeltaY;
+        console.log("XCase 1: ");
+        character.move_to.y -= viewPortDeltaY;
     }
-    else if ((new_y <= 200) && (viewOrigin.top - (new_y - character.pos.y) > 0)) {
-        character.pos.y = 200;
-        viewOrigin.top -= character.pos.y - new_y;
+    else if ((new_y <= border) && ((viewOrigin.top - (character.pos.y - new_y)) > 0) && (character.pos.y > new_y)) {
+        viewPortDeltaY = character.pos.y - new_y;
+        console.log("XCase 2: " + (viewOrigin.top - (character.pos.y - new_y)).toString());
+        character.pos.y = border;
+        viewOrigin.top -= viewPortDeltaY;
+        character.move_to.y += viewPortDeltaY;
     }
-    else if ((new_y >= 400) && ((viewOrigin.top + 600) + (new_y - character.pos.y) >= 1200)) {
-        character.pos.y = new_y - (600 - viewOrigin.top);
-        viewOrigin.top = 1200;
+    else if ((new_y >= height-border) && ((viewOrigin.top + height) + (new_y - character.pos.y) >= mapHeight)) {
+        viewPortDeltaY = (mapHeight - height) - viewOrigin.top;
+        character.pos.y += (new_y - character.pos.y) - viewPortDeltaY;
+        viewOrigin.top = mapHeight - height;
+        character.move_to.y -= viewPortDeltaY;
+        console.log("XCase 3:");
     }
-    else if ((new_y <= 200) && (viewOrigin.top - (new_y - character.pos.y) <= 0)) {
-        character.pos.y = new_y - viewOrigin.top ;
+    else if ((new_y <= border) && (viewOrigin.top - (character.pos.y - new_y) <= 0)) {
+        viewPortDeltaY = viewOrigin.top;
+        character.pos.y = new_y - viewOrigin.top;
         viewOrigin.top = 0;
+        character.move_to.y += viewPortDeltaY;
+        console.log("XCase 4:");
     }
-    else {
-        character.pos.y = new_y;
+    else if ((new_y < height) && (new_y > 0)) {
+      character.pos.y = new_y;
+      console.log("XCase 5: ");
     }
+    else if (new_y <= 0) {
+        character.pos.y = 0;
+    }
+    else if (new_y >= height) {
+        character.pos.y = height;
+    }
+
     //
     // if (new_x >= width) {
     //     character.pos.x = width;
@@ -274,7 +298,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         draw_view(context, character);
         // Draw myself.
-        draw_turtle(context, character.pos.x - viewOrigin.left, character.pos.y - viewOrigin.top, character.pos.angle);
+        draw_turtle(context, character.pos.x, character.pos.y, character.pos.angle);
         for (var i in all_characters) {
             other = all_characters[i];
             other.x -= viewOrigin.left;
@@ -299,9 +323,12 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         if (character.id) {
-            var correctedCharacter = character;
-            correctedCharacter.pos.x += viewOrigin.left;
-            correctedCharacter.pos.y += viewOrigin.top;
+            var correctedCharacter = {
+                move_to:{x:character.move_to.x,y:character.move_to.y},
+                move: character.move,
+                id: character.id,
+                pos: {x:character.pos.x+viewOrigin.left, y:character.pos.y+viewOrigin.top, angle: character.pos.angle}
+            };
             socket.emit('move_character', correctedCharacter);
         }
 
