@@ -311,6 +311,12 @@ function resetGame() {
   usernameTb.value = username;
 }
 
+function checkSpecial(character) {
+  if (character.pos.special) {
+    img = special_img;
+  }
+}
+
 function loadGame() {
     // get canvas element and create context
     var setupDiv = document.getElementById('setupDiv');
@@ -370,7 +376,6 @@ function loadGame() {
 
         var attack = {id: character.id, attack: attack_position, type: 'A'};
         if (character.pos.special) {
-            console.log("SPECIAL ATTACK");
             attack.type = 'B';
             character.pos.special = false;
             attackAnimation(0, true);
@@ -434,8 +439,8 @@ function loadGame() {
     });
 
     socket.on('got_special', function () {
-        console.log("got_special");
         character.pos.special = true;
+        setTimeout(function() {checkSpecial(character)}, 300);
     });
 
     // main loop, running every 25ms
