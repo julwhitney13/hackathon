@@ -1,6 +1,6 @@
 function draw_circle(canvas, x, y) {
     canvas.beginPath();
-    canvas.arc(x, y, 5, 0, 2 * Math.PI, false);
+    canvas.arc(x, y, 10, 0, 2 * Math.PI, false);
     canvas.closePath();
     canvas.fillStyle = 'green';
     canvas.fill();
@@ -63,6 +63,24 @@ document.addEventListener("DOMContentLoaded", function() {
     canvas.onmousemove = function(e) {
         move_character_towards_cursor(character, e.clientX, e.clientY);
         character.move = true;
+    };
+
+    canvas.onmousedown = function(e) {
+        attack_radius = 20.0;
+        w = e.clientX - character.pos.x;
+        h = e.clientY - character.pos.y;
+        hypo = Math.sqrt((w * w) + (h * h));
+
+        xratio = w / hypo;
+        yratio = h / hypo;
+
+        attackX = character.pos.x + (xratio * attack_radius);
+        attackY = character.pos.y + (yratio * attack_radius);
+
+        attack_position = {x: attackX, y: attackY};
+
+        var attack = {character.id, attack: attack_pos, type: 'A'};
+        socket.emit('attack', attack);
     };
 
     // draw line received from server

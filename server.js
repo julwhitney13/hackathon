@@ -43,7 +43,6 @@ io.on('connection', function (socket) {
      }
    });
 
-
    characterHistory[socket.id] = {x: ((Math.random()*1990)+5), y: ((Math.random()*1990)+5)};
    socket.emit('init_character', {id: socket.id, pos: characterHistory[socket.id]});
 
