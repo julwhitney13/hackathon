@@ -6,14 +6,25 @@
       <link rel="stylesheet" href="style.css" />
       <script src="socket.io/socket.io.js"></script>
       <script src="client.js"></script>
+      <audio id="death_sound" src="audio/grenade.mp3"></audio>
+      <audio id="enter_sound" src="audio/enter.mp3"></audio>
+      <audio id="attack_sound" src="audio/clash.mp3"></audio>
    </head>
    <body>
       <!-- <canvas id="game" style="background-color: #ccc"></canvas> -->
-        <p style="text-align: center;vertical-align: middle;line-height: 90px;font-size:500%;">Turtle Royale</p>
-        <p align="center">
-          <canvas id="game" style="margin=auto;">No canvas support</canvas>
-        </p>
-        <p align="center" style="text-align:center;font-size:300%;">Your Score:</p>
-        <p align="center" style="text-align:center;font-size:200%;" id="score"></p>
+        <p style="text-align: center;vertical-align: middle;line-height: 90px;font-size:400%;">Turtle Royale</p>
+        <div id="setupDiv">
+          <form action="" method="get" id="nameform" align="center">
+            Username: <input type="text" name="username" id="username">
+            <input type="button" onclick="loadGame()" value="Start">
+          </form>
+        </div>
+        <div id="gameDiv">
+          <p align="center">
+            <canvas id="game" style="margin=auto;">No canvas support</canvas>
+          </p>
+          <p align="center" style="text-align:center;font-size:200%;">Your Score:</p>
+          <p align="center" style="text-align:center;font-size:150%;" id="score"></p>
+        </div>
    </body>
 </html>
