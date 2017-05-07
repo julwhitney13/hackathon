@@ -29,8 +29,10 @@ io.on('connection', function (socket) {
       if (data.id in characterHistory) {
         characterHistory[data.id].x = data.pos.x;
         characterHistory[data.id].y = data.pos.y;
+        characterHistory[data.id].angle = data.pos.angle;
         // send line to all clients
         io.emit('update_characters', characterHistory);
+        console.log("Angle:" + data.pos.angle.toString());
       }
    });
 
@@ -41,7 +43,7 @@ io.on('connection', function (socket) {
      for (var key in characterHistory) {
        if (characterHistory.hasOwnProperty(key)) {
          var character = characterHistory[key];
-         if ((Math.abs(character.x - data.attack.x) <= 10) && (Math.abs(character.y - data.attack.y) <= 10) && (data.id != key)) {
+         if ((Math.abs(character.x - data.attack.x) <= 40) && (Math.abs(character.y - data.attack.y) <= 40) && (data.id != key)) {
            dead.push(key);
          }
        }
@@ -52,7 +54,7 @@ io.on('connection', function (socket) {
      }
    });
 
-   characterHistory[socket.id] = {x: Math.floor((Math.random()*490)+5), y: Math.floor((Math.random()*490)+5), score:0};
+   characterHistory[socket.id] = {x: Math.floor((Math.random()*490)+5), y: Math.floor((Math.random()*490)+5), score:0, angle:0};
    socket.emit('init_character', {id: socket.id, pos: characterHistory[socket.id]});
 
    socket.on('disconnect', function() {
