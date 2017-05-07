@@ -1,4 +1,11 @@
-var img= new Image();
+var img = new Image();
+var normal_img= new Image();
+var attack_img_a = new Image();
+var attack_img_b = new Image();
+var special_img = new Image();
+var special_attack_img_a = new Image();
+var special_attack_img_b = new Image();
+
 var view_radius = 130;
 var view_angle = Math.PI * 0.33;
 var cached_board = [];
@@ -12,7 +19,13 @@ const border = 200;
 const mapWidth = 2400;
 const mapHeight = 1200;
 var username = "";
-img.src = "https://image.ibb.co/bKH1ak/turlte4real.png";
+normal_img.src = "image/1.png";
+attack_img_a.src = "image/2.png";
+attack_img_b.src = "image/3.png";
+special_img.src = "image/s1.png";
+special_attack_img_a.src = "image/s2.png";
+special_attack_img_b.src = "image/s3.png";
+img = normal_img;
 
 function draw_circle(context, x, y) {
     context.beginPath();
@@ -25,7 +38,8 @@ function draw_circle(context, x, y) {
     context.stroke();
 }
 
-function draw_turtle(context, x, y, angle) {
+function draw_turtle(context, x, y, angle, character) {
+  var turtle_image = img;
   context.save();
 
   //Set the origin to the center of the image
@@ -33,7 +47,7 @@ function draw_turtle(context, x, y, angle) {
   //Rotate the canvas around the origin
   context.rotate(angle);
   //draw the image
-  context.drawImage(img,imageWidth / 2 * (-1),imageHeight / 2 * (-1),imageWidth,imageHeight);
+  context.drawImage(turtle_image,imageWidth / 2 * (-1),imageHeight / 2 * (-1),imageWidth,imageHeight);
 
   context.restore();
 }
@@ -137,6 +151,43 @@ function draw_view(canvas, character) {
     canvas.stroke();
 
     canvas.globalCompositeOperation = "source-over";
+}
+
+function attackAnimation(imgSet, special) {
+  if (special) {
+    if (imgSet == 0) {
+      img = special_attack_img_a;
+      setTimeout(function() {attackAnimation(1), special}, 100);
+    }
+    else if (imgSet == 1) {
+      img = special_attack_img_b;
+      setTimeout(function() {attackAnimation(2), special}, 100);
+    }
+    else if (imgSet == 2){
+      img = special_attack_img_a;
+      setTimeout(function() {attackAnimation(3), special}, 100);
+    }
+    else {
+      img = normal_img;
+    }
+  }
+  else {
+    if (imgSet == 0) {
+      img = attack_img_a;
+      setTimeout(function() {attackAnimation(1), special}, 100);
+    }
+    else if (imgSet == 1) {
+      img = attack_img_b;
+      setTimeout(function() {attackAnimation(2), special}, 100);
+    }
+    else if (imgSet == 2){
+      img = attack_img_a;
+      setTimeout(function() {attackAnimation(3), special}, 100);
+    }
+    else {
+      img = normal_img;
+    }
+  }
 }
 
 function move_character(character, new_x, new_y, viewOrigin) {
@@ -322,6 +373,11 @@ function loadGame() {
             console.log("SPECIAL ATTACK");
             attack.type = 'B';
             character.pos.special = false;
+            attackAnimation(0, true);
+
+        }
+        else {
+          attackAnimation(0, false);
         }
         socket.emit('attack',attack);
         document.getElementById('attack_sound').play();
@@ -340,7 +396,7 @@ function loadGame() {
 
         draw_view(context, character);
         // Draw myself.
-        draw_turtle(context, character.pos.x, character.pos.y, character.pos.angle);
+        draw_turtle(context, character.pos.x, character.pos.y, character.pos.angle, character);
         for (var i in all_characters) {
             other = all_characters[i];
             other.x -= viewOrigin.left;
@@ -379,6 +435,7 @@ function loadGame() {
 
     socket.on('got_special', function () {
         console.log("got_special");
+        img = special_img;
         character.pos.special = true;
     });
 
