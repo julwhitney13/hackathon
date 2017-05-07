@@ -157,15 +157,15 @@ function attackAnimation(imgSet, special) {
   if (special) {
     if (imgSet == 0) {
       img = special_attack_img_a;
-      setTimeout(function() {attackAnimation(1), special}, 100);
+      setTimeout(function() {attackAnimation(1, special)}, 100);
     }
     else if (imgSet == 1) {
       img = special_attack_img_b;
-      setTimeout(function() {attackAnimation(2), special}, 100);
+      setTimeout(function() {attackAnimation(2, special)}, 100);
     }
     else if (imgSet == 2){
       img = special_attack_img_a;
-      setTimeout(function() {attackAnimation(3), special}, 100);
+      setTimeout(function() {attackAnimation(3, special)}, 100);
     }
     else {
       img = normal_img;
@@ -174,15 +174,15 @@ function attackAnimation(imgSet, special) {
   else {
     if (imgSet == 0) {
       img = attack_img_a;
-      setTimeout(function() {attackAnimation(1), special}, 100);
+      setTimeout(function() {attackAnimation(1, special)}, 100);
     }
     else if (imgSet == 1) {
       img = attack_img_b;
-      setTimeout(function() {attackAnimation(2), special}, 100);
+      setTimeout(function() {attackAnimation(2, special)}, 100);
     }
     else if (imgSet == 2){
       img = attack_img_a;
-      setTimeout(function() {attackAnimation(3), special}, 100);
+      setTimeout(function() {attackAnimation(3, special)}, 100);
     }
     else {
       img = normal_img;
@@ -435,7 +435,6 @@ function loadGame() {
 
     socket.on('got_special', function () {
         console.log("got_special");
-        img = special_img;
         character.pos.special = true;
     });
 
