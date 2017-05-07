@@ -1,6 +1,8 @@
 var img= new Image();
 var view_radius = 130;
 var view_angle = Math.PI * 0.33;
+var cached_board = [];
+
 const width = 1200;
 const height = 600;
 const imageWidth = 50;
@@ -36,6 +38,16 @@ function draw_turtle(context, x, y, angle) {
   context.restore();
 }
 
+function truncate_name(name) {
+    if (name.length >= 10) {
+        return name.slice(0, 10);
+    }
+    else {
+        var missing = 10 - name.length;
+        return name + ' '.repeat(missing);
+    }
+}
+
 function transpose_point(x, y, originX, originY, theta) {
     x = x - originX;
     y = y - originY;
@@ -56,6 +68,34 @@ function point_in_range(character, x, y) {
     facing_player &= (point_angle <= (character_direction + view_angle));
 
     return (distance <= view_radius) && facing_player;
+}
+
+function draw_leaderboard(canvas) {
+    if (cached_board.length == 0) {
+        return;
+    }
+
+    var lbHeight = (cached_board.length * 18) + 29;
+    var lbWidth = 250;
+
+    canvas.fillStyle = 'rgba(240, 240, 240, 0.6)';
+    canvas.fillRect(5, 5, lbWidth, lbHeight);
+    canvas.strokeStyle = 'rgba(44, 44, 44, 0.95)';
+    canvas.strokeRect(5,5, lbWidth, lbHeight);
+    canvas.lineWidth = 5;
+    canvas.font = '20px Hack';
+    canvas.fillStyle = 'rgba(50, 50, 50, 1.0)';
+    canvas.fillText('Leaderboard', 10, 25);
+    canvas.font = '16px Hack';
+    var x = 10;
+    var y = 43;
+    for (leader in cached_board) {
+        var name = truncate_name(cached_board[leader].name);
+        var leader_msg = (parseInt(leader) + 1).toString() + '. ' + name + "  Score: " + cached_board[leader].score;
+        canvas.fillText(leader_msg, x, y);
+        y += 18;
+    }
+    canvas.lineWidth = 1;
 }
 
 function draw_view(canvas, character) {
@@ -92,7 +132,7 @@ function draw_view(canvas, character) {
     canvas.closePath();
     canvas.fillStyle = grd;
     canvas.fill();
-    canvas.lineWidth = 0;
+    canvas.lineWidth = 1;
     canvas.strokeStyle = grd;
     canvas.stroke();
 
@@ -280,6 +320,7 @@ function loadGame() {
     socket.on('update_characters', function (all_characters) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         canvas.style.backgroundPosition = '-' + viewOrigin.left.toString() + 'px -' + viewOrigin.top.toString() + 'px';
+        canvas.lineWidth = 1;
         context.rect(0, 0, canvas.width, canvas.height);
         context.fillStyle = 'rgba(47, 79, 79, 0.80)';
         context.fill();
@@ -300,6 +341,11 @@ function loadGame() {
               scoreBoard.innerHTML = all_characters[i].score.toString();
             }
         }
+        draw_leaderboard(context);
+    });
+
+    socket.on('update_leaderboard', function(leaderboard) {
+        cached_board = leaderboard;
     });
 
     socket.on('character_died', function () {

@@ -30,6 +30,7 @@ function updateLeaderboard() {
     for(var i = 0; i < leaderboard.length; i++) {
         console.log(i.toString() + ": " + leaderboard[i].name + " Score: " + leaderboard[i].score);
     }
+    io.emit('update_leaderboard', leaderboard);
 }
 
 function compareScore(firstChar, secondChar) {
@@ -78,6 +79,8 @@ io.on('connection', function (socket) {
    characterHistory[socket.id] = {x: Math.floor((Math.random()*490)+5), y: Math.floor((Math.random()*490)+5), score:0, angle:0};
    socket.emit('init_character', {id: socket.id, pos: characterHistory[socket.id], name: 'Name ' + socket.id});
 
+
+   io.emit('update_leaderboard', leaderboard);
    socket.on('disconnect', function() {
      delete characterHistory[socket.id];
    });
