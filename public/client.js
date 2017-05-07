@@ -28,10 +28,11 @@ function move_character(character, new_x, new_y) {
 }
 
 function move_character_towards_cursor(character, mouseX, mouseY){
+    var rect = document.getElementById('game').getBoundingClientRect();
     character.move_to.x = mouseX;
     character.move_to.y = mouseY;
-   var xDistance = mouseX - character.pos.x;
-   var yDistance = mouseY - character.pos.y;
+   var xDistance = mouseX - character.pos.x - rect.left;
+   var yDistance = mouseY - character.pos.y - rect.top;
    var distance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
    if (distance > 1) {
         var new_pos_x = character.pos.x + xDistance * 0.015;
@@ -46,6 +47,7 @@ var height  = 500;
 document.addEventListener("DOMContentLoaded", function() {
     // get canvas element and create context
     var canvas  = document.getElementById('game');
+    var scoreBoard  = document.getElementById('score');
     var context = canvas.getContext('2d');
     var socket  = io.connect();
 
@@ -66,9 +68,10 @@ document.addEventListener("DOMContentLoaded", function() {
     };
 
     canvas.onmousedown = function(e) {
+        var rect = document.getElementById('game').getBoundingClientRect();
         attack_radius = 20.0;
-        w = e.clientX - character.pos.x;
-        h = e.clientY - character.pos.y;
+        w = e.clientX - (character.pos.x + rect.left);
+        h = e.clientY - (character.pos.y + rect.top);
         hypo = Math.sqrt((w * w) + (h * h));
 
         xratio = w / hypo;
@@ -86,8 +89,11 @@ document.addEventListener("DOMContentLoaded", function() {
     // draw line received from server
     socket.on('update_characters', function (all_characters) {
         context.clearRect(0, 0, canvas.width, canvas.height); // Clear out the canvas
-        console.log("update character");
+        var text = "";
         for (var i in all_characters) {
+            if (i == character.id) {
+              scoreBoard.innerHTML = all_characters[i].score.toString();
+            }
             draw_circle(context, all_characters[i].x, all_characters[i].y);
         }
     });
@@ -102,10 +108,9 @@ document.addEventListener("DOMContentLoaded", function() {
             move_character_towards_cursor(character, character.move_to.x, character.move_to.y);
         }
 
-        console.log(character.pos.x);
-        console.log(character.pos.y);
-
-        socket.emit('move_character', character);
+        if (character.id) {
+          socket.emit('move_character', character);
+        }
         setTimeout(mainLoop, 25);
     }
 
