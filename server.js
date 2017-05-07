@@ -43,10 +43,9 @@ io.on('connection', function (socket) {
      }
    });
 
-   socket.on('connect', function() {
-     characterHistory[socket.id] = {x: ((Math.random()*1990)+5), y: ((Math.random()*1990)+5)};
-     socket.emit('init_character', {id: socket.id, pos: characterHistory[characterHistory.length-1]});
-   });
+
+   characterHistory[socket.id] = {x: ((Math.random()*1990)+5), y: ((Math.random()*1990)+5)};
+   socket.emit('init_character', {id: socket.id, pos: characterHistory[socket.id]});
 
    socket.on('disconnect', function() {
      delete characterHistory[socket.id];
