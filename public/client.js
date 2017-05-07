@@ -5,6 +5,7 @@ var imageHeight = 50;
 var img= new Image();
 var view_radius = 130;
 var view_angle = Math.PI * 0.33;
+const deg90 = 1.5708
 img.src = "https://image.ibb.co/bKH1ak/turlte4real.png";
 
 function draw_circle(context, x, y) {
@@ -91,33 +92,50 @@ function draw_view(canvas, character) {
 }
 
 function move_character(character, new_x, new_y, viewOrigin) {
-    console.log("new_x: " + viewOrigin.left.toString() + " new_y: " + viewOrigin.top.toString());
+    //console.log("pos_x: " + character.pos.x.toString() + " new_x: " + new_x.toString());
     // X
-    if ((new_x < 1000) && (new_x > 200)) {
-        character.pos.x = new_x;
-    }
-    else if ((new_x >= 1000) && ((viewOrigin.left + 1200) + (new_x - character.pos.x) < 2400)) {
+    var viewPortDelta = 0;
+    if ((new_x >= 1000) && ((viewOrigin.left + 1200) + (new_x - character.pos.x) < 2400) && (character.pos.x < new_x)) {
+        viewPortDelta = new_x - character.pos.x
         character.pos.x = 1000;
-        viewOrigin.left += new_x - character.pos.x;
+        viewOrigin.left += viewPortDelta;
+        console.log("XCase 1: ");
+        character.move_to.x -= viewPortDelta;
     }
-    else if ((new_x <= 200) && (viewOrigin.left - (new_x - character.pos.x) > 0)) {
+    else if ((new_x <= 200) && ((viewOrigin.left - (character.pos.x - new_x)) > 0) && (character.pos.x > new_x)) {
+        viewPortDelta = character.pos.x - new_x;
+        console.log("XCase 2: " + (viewOrigin.left - (character.pos.x - new_x)).toString());
         character.pos.x = 200;
-        viewOrigin.left -= character.pos.x - new_x;
+        viewOrigin.left -= viewPortDelta;
+        character.move_to.x += viewPortDelta;
     }
     else if ((new_x >= 1000) && ((viewOrigin.left + 1200) + (new_x - character.pos.x) >= 2400)) {
-        character.pos.x = new_x - (1200 - viewOrigin.left);
+        viewPortDelta = 1200 - viewOrigin.left;
+        character.pos.x += (new_x - character.pos.x) - viewPortDelta;
         viewOrigin.left = 1200;
+        character.move_to.x -= viewPortDelta;
+        console.log("XCase 3:");
     }
-    else if ((new_x <= 200) && (viewOrigin.left - (new_x - character.pos.x) <= 0)) {
+    else if ((new_x <= 200) && (viewOrigin.left - (character.pos.x - new_x) <= 0)) {
+        viewPortDelta = viewOrigin.left
         character.pos.x = new_x - viewOrigin.left ;
         viewOrigin.left = 0;
+        character.move_to.x += viewPortDelta;
+        console.log("XCase 4:");
+    }
+    else if ((new_x < 1200) && (new_x > 0)) {
+      character.pos.x = new_x;
+      console.log("XCase 5: ");
+    }
+    else if (new_x <= 0) {
+        character.pos.x = 0;
+    }
+    else if (new_x >= 1200) {
+        character.pos.x = 1200;
     }
 
     // Y
-    if ((new_y < 400) && (new_y > 200)) {
-        character.pos.y = new_y;
-    }
-    else if ((new_y >= 400) && ((viewOrigin.top + 600) + (new_y - character.pos.y) < 1200)) {
+    if ((new_y >= 400) && ((viewOrigin.top + 600) + (new_y - character.pos.y) < 1200)) {
         character.pos.y = 400;
         viewOrigin.top += new_y - character.pos.y;
     }
@@ -133,7 +151,9 @@ function move_character(character, new_x, new_y, viewOrigin) {
         character.pos.y = new_y - viewOrigin.top ;
         viewOrigin.top = 0;
     }
-
+    else {
+        character.pos.y = new_y;
+    }
     //
     // if (new_x >= width) {
     //     character.pos.x = width;
@@ -152,10 +172,12 @@ function move_character(character, new_x, new_y, viewOrigin) {
     // } else {
     //     character.pos.y = new_y;
     // }
+
+    console.log("pos_x: " + character.pos.x.toString() + " // viewOriginX: " + viewOrigin.left.toString() + "new_x: " + new_x.toString());
 }
 
 function move_character_towards_cursor(character, mouseX, mouseY, viewOrigin){
-   character.pos.angle = pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y) + 1.5708
+   character.pos.angle = pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y) + deg90
    character.move_to.x = mouseX;
    character.move_to.y = mouseY;
    var xDistance = mouseX - character.pos.x;
@@ -164,6 +186,9 @@ function move_character_towards_cursor(character, mouseX, mouseY, viewOrigin){
    if (distance > 1) {
         var new_pos_x = character.pos.x + xDistance * 0.015;
         var new_pos_y = character.pos.y + yDistance * 0.015;
+        if (new_pos_x >= 1000) {
+            console.log("xDistance: " + xDistance.toString() + " mouseX: " + mouseX.toString());
+        }
         move_character(character, new_pos_x, new_pos_y, viewOrigin);
    }
 
