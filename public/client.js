@@ -288,8 +288,7 @@ document.addEventListener("DOMContentLoaded", function() {
         var attack_position = {x: attackX+viewOrigin.left, y: attackY+viewOrigin.top};
 
         var attack = {id: character.id, attack: attack_position, type: 'A'};
-        socket.emit('attack', attack);
-        var audio = new Audio('audio/clash.mp3');
+        document.getElementById('clash_sound').play();
         audio.play();
     };
 
@@ -349,8 +348,7 @@ document.addEventListener("DOMContentLoaded", function() {
         character.pos.x = data.pos.x;
         character.pos.y = data.pos.y;
         character.pos.angle = data.pos.angle;
-        var audio = new Audio('audio/enter.mp3');
-        audio.play();
+        document.getElementById('enter_sound').play();
         mainLoop();
     });
 });
