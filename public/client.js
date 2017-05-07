@@ -245,6 +245,10 @@ function characterAngle(character) {
     return pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y);
 }
 
+function moveBackground(canvas, viewOrigin) {
+  canvas.style.backgroundPosition = '-' + viewOrigin.left.toString() + 'px -' + viewOrigin.top.toString() + 'px';
+}
+
 function resetGame() {
   var setupDiv = document.getElementById('setupDiv');
 
@@ -275,8 +279,10 @@ function loadGame() {
         move: false,
         name: false,
         id: false,
-        pos: {x:0, y:0, angle: 0}
+        pos: {x:0, y:0, angle: 0, special:false}
     };
+
+    var specials = {};
 
     var viewOrigin = {
         top:0,
@@ -312,6 +318,11 @@ function loadGame() {
         var attack_position = {x: attackX+viewOrigin.left, y: attackY+viewOrigin.top};
 
         var attack = {id: character.id, attack: attack_position, type: 'A'};
+        if (character.pos.special) {
+            console.log("SPECIAL ATTACK");
+            attack.type = 'B';
+            character.pos.special = false;
+        }
         socket.emit('attack',attack);
         document.getElementById('attack_sound').play();
     };
@@ -319,8 +330,8 @@ function loadGame() {
     // draw line received from server
     socket.on('update_characters', function (all_characters) {
         context.clearRect(0, 0, canvas.width, canvas.height);
-        canvas.style.backgroundPosition = '-' + viewOrigin.left.toString() + 'px -' + viewOrigin.top.toString() + 'px';
         canvas.lineWidth = 1;
+        moveBackground(canvas,viewOrigin);
         context.rect(0, 0, canvas.width, canvas.height);
         context.fillStyle = 'rgba(47, 79, 79, 0.80)';
         context.fill();
@@ -341,6 +352,14 @@ function loadGame() {
               scoreBoard.innerHTML = all_characters[i].score.toString();
             }
         }
+        for (var j in specials) {
+            special = specials[j];
+            special.x -= viewOrigin.left;
+            special.y -= viewOrigin.top;
+            if (point_in_range(character, special.x, special.y)) {
+              draw_circle(context, special.x, special.y);
+            }
+        }
         draw_leaderboard(context);
     });
 
@@ -357,8 +376,14 @@ function loadGame() {
         document.getElementById('death_sound').play();
     });
 
+    socket.on('got_special', function () {
+        console.log("got_special");
+        character.pos.special = true;
+    });
+
     // main loop, running every 25ms
     function mainLoop() {
+
         if (character.move) {
             move_character_towards_cursor(character,character.move_to.x,character.move_to.y, viewOrigin);
         }
@@ -369,7 +394,7 @@ function loadGame() {
                 move: character.move,
                 id: character.id,
                 name: usernameTb.value,
-                pos: {x:character.pos.x+viewOrigin.left, y:character.pos.y+viewOrigin.top, angle: character.pos.angle}
+                pos: {x:character.pos.x+viewOrigin.left, y:character.pos.y+viewOrigin.top, angle: character.pos.angle, special:character.pos.special}
             };
             socket.emit('move_character', correctedCharacter);
         }
@@ -379,12 +404,40 @@ function loadGame() {
         }
     }
 
+// 1165 // 226
+    socket.on('update_specials', function(data) {
+        specials = data;
+    });
+
     socket.on('init_character', function(data) {
         character.id = data.id;
-        character.pos.x = data.pos.x;
-        character.pos.y = data.pos.y;
+        if (data.pos.x < width/2) {
+          character.pos.x = data.pos.x;
+        }
+        else if ((data.pos.x >= width/2) && (data.pos.x < (width*3)/2)) {
+          character.pos.x = width/2;
+          viewOrigin.left = data.pos.x - width/2;
+        }
+        else if (data.pos.x >= (width*3)/2) {
+          viewOrigin.left = mapWidth - width;
+          character.pos.x = data.pos.x - viewOrigin.left;
+        }
+
+        if (data.pos.y < height/2) {
+          character.pos.y = data.pos.y;
+        }
+        else if ((data.pos.y >= height/2) && (data.pos.y < (height*3)/2)) {
+          character.pos.y = height/2;
+          viewOrigin.top = data.pos.y - height/2;
+        }
+        else if (data.pos.y >= (height*3)/2) {
+          viewOrigin.top = mapHeight - height;
+          character.pos.y = data.pos.y - viewOrigin.top;
+        }
+
         character.pos.angle = data.pos.angle;
         character.name = usernameTb.value;
+        moveBackground(canvas, viewOrigin);
         document.getElementById('enter_sound').play();
         mainLoop();
     });
