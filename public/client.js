@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         attack_position = {x: attackX, y: attackY};
 
-        var attack = {character.id, attack: attack_pos, type: 'A'};
+        var attack = {id: character.id, attack: attack_position, type: 'A'};
         socket.emit('attack', attack);
     };
 
@@ -90,6 +90,10 @@ document.addEventListener("DOMContentLoaded", function() {
         for (var i in all_characters) {
             draw_circle(context, all_characters[i].x, all_characters[i].y);
         }
+    });
+
+    socket.on('character_died', function () {
+        window.location.replace('https://www.yourwaifuisshit.com');
     });
 
     // main loop, running every 25ms
