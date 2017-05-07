@@ -9,6 +9,65 @@ function draw_circle(canvas, x, y) {
     canvas.stroke();
 }
 
+function transpose_point(x, y, originX, originY, theta) {
+    x = x - originX;
+    y = y - originY;
+    var newX = (Math.cos(theta) * x) - (Math.sin(theta) * y);
+    var newY = (Math.sin(theta) * x) + (Math.cos(theta) * y);
+    return {x: newX + originX, y: newY + originY};
+}
+
+function point_in_range(character, x, y) {
+    var xDistance = x - character.pos.x;
+    var yDistance = y - character.pos.y;
+    var distance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+
+    var character_direction = characterAngle(character);
+    var point_angle = pointToAngle(x, y, character.pos.x, character.pos.y);
+
+    var facing_player = (point_angle >= (character_direction - view_angle));
+    facing_player &= (point_angle <= (character_direction + view_angle));
+
+    return (distance <= view_radius) && facing_player;
+}
+
+function draw_view(canvas, character) {
+    canvas.globalCompositeOperation = "destination-out";
+    var mouseX = character.move_to.x;
+    var mouseY = character.move_to.y;
+    var character_direction = characterAngle(character);
+
+    var w = mouseX - character.pos.x;
+    var h = mouseY - character.pos.y;
+    var hypo = Math.sqrt((w * w) + (h * h));
+
+    var xratio = w / hypo;
+    var yratio = h / hypo;
+
+    var arcCenterX = character.pos.x + (xratio * view_radius);
+    var arcCenterY = character.pos.y + (yratio * view_radius);
+
+    var arcS = character_direction - view_angle;
+    var arcE = character_direction + view_angle;
+
+    var left = transpose_point(arcCenterX, arcCenterY, character.pos.x, character.pos.y, view_angle);
+    var right = transpose_point(arcCenterX, arcCenterY, character.pos.x, character.pos.y, -view_angle);
+    canvas.beginPath();
+    canvas.arc(character.pos.x, character.pos.y, view_radius, arcS, arcE, false);
+    canvas.moveTo(character.pos.x, character.pos.y);
+    canvas.lineTo(left.x, left.y);
+    canvas.lineTo(right.x, right.y);
+    canvas.lineTo(character.pos.x, character.pos.y)
+    canvas.closePath();
+    canvas.fillStyle = 'black';
+    canvas.fill();
+    canvas.lineWidth = 1;
+    canvas.strokeStyle = '#000000';
+    canvas.stroke();
+
+    canvas.globalCompositeOperation = "source-over";
+}
+
 function move_character(character, new_x, new_y) {
     if (new_x >= width) {
         character.pos.x = width;
@@ -50,8 +109,17 @@ function pointToAngle(x, y, originX, originY) {
     return theta;
 }
 
+function characterAngle(character) {
+    var mouseX = character.move_to.x;
+    var mouseY = character.move_to.y;
+    return pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y);
+   }
+
+
 var width   = 500;
 var height  = 500;
+var view_radius = 130;
+var view_angle = Math.PI * 0.33;
 
 document.addEventListener("DOMContentLoaded", function() {
     // get canvas element and create context
@@ -76,18 +144,18 @@ document.addEventListener("DOMContentLoaded", function() {
     };
 
     canvas.onmousedown = function(e) {
-        attack_radius = 20.0;
-        w = e.clientX - character.pos.x;
-        h = e.clientY - character.pos.y;
-        hypo = Math.sqrt((w * w) + (h * h));
+        var attack_radius = 20.0;
+        var w = e.clientX - character.pos.x;
+        var h = e.clientY - character.pos.y;
+        var hypo = Math.sqrt((w * w) + (h * h));
 
-        xratio = w / hypo;
-        yratio = h / hypo;
+        var xratio = w / hypo;
+        var yratio = h / hypo;
 
-        attackX = character.pos.x + (xratio * attack_radius);
-        attackY = character.pos.y + (yratio * attack_radius);
+        var attackX = character.pos.x + (xratio * attack_radius);
+        var attackY = character.pos.y + (yratio * attack_radius);
 
-        attack_position = {x: attackX, y: attackY};
+        var attack_position = {x: attackX, y: attackY};
 
         var attack = {id: character.id, attack: attack_position, type: 'A'};
         socket.emit('attack', attack);
@@ -95,10 +163,21 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // draw line received from server
     socket.on('update_characters', function (all_characters) {
-        context.clearRect(0, 0, canvas.width, canvas.height); // Clear out the canvas
-        console.log("update character");
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.rect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = 'black';
+        context.fill();
+        context.strokeStyle = '#000000';
+        context.stroke();
+
+        draw_view(context, character);
+        // Draw myself.
+        draw_circle(context, character.pos.x, character.pos.y);
         for (var i in all_characters) {
-            draw_circle(context, all_characters[i].x, all_characters[i].y);
+            other = all_characters[i];
+            if (i != character.id && point_in_range(character, other.x, other.y)) {
+                draw_circle(context, other.x, other.y);
+            }
         }
     });
 
