@@ -17,6 +17,25 @@ console.log("Server running on 127.0.0.1:8080");
 
 var characterHistory = {};
 
+var leaderboard = [];
+
+function updateLeaderboard() {
+    full_ranking = [];
+    for (id in characterHistory) {
+        full_ranking.push(characterHistory[id]);
+    }
+    full_ranking.sort(compareScore);
+    leaderboard = (full_ranking.length >= 10) ? full_ranking.slice(0, 10) : full_ranking;
+    console.log('\n\nCurrent LEADERBOARD!\n')
+    for(var i = 0; i < leaderboard.length; i++) {
+        console.log(i.toString() + ": " + leaderboard[i].name + " Score: " + leaderboard[i].score);
+    }
+}
+
+function compareScore(firstChar, secondChar) {
+    return secondChar.score - firstChar.score;
+}
+
 // event-handler for new incoming connections
 io.on('connection', function (socket) {
 
@@ -30,6 +49,7 @@ io.on('connection', function (socket) {
         characterHistory[data.id].x = data.pos.x;
         characterHistory[data.id].y = data.pos.y;
         characterHistory[data.id].angle = data.pos.angle;
+        characterHistory[data.id].name = data.name;
         // send line to all clients
         io.emit('update_characters', characterHistory);
         console.log("Angle:" + data.pos.angle.toString());
@@ -52,10 +72,11 @@ io.on('connection', function (socket) {
        socket.broadcast.to(dead[i]).emit( 'character_died', '');
      }
      characterHistory[data.id].score += dead.length;
+     updateLeaderboard();
    });
 
    characterHistory[socket.id] = {x: Math.floor((Math.random()*490)+5), y: Math.floor((Math.random()*490)+5), score:0, angle:0};
-   socket.emit('init_character', {id: socket.id, pos: characterHistory[socket.id]});
+   socket.emit('init_character', {id: socket.id, pos: characterHistory[socket.id], name: 'Name ' + socket.id});
 
    socket.on('disconnect', function() {
      delete characterHistory[socket.id];

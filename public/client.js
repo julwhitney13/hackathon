@@ -233,6 +233,7 @@ function loadGame() {
     var character = {
         move_to:{x:0,y:0},
         move: false,
+        name: false,
         id: false,
         pos: {x:0, y:0, angle: 0}
     };
@@ -321,6 +322,7 @@ function loadGame() {
                 move_to:{x:character.move_to.x,y:character.move_to.y},
                 move: character.move,
                 id: character.id,
+                name: usernameTb.value,
                 pos: {x:character.pos.x+viewOrigin.left, y:character.pos.y+viewOrigin.top, angle: character.pos.angle}
             };
             socket.emit('move_character', correctedCharacter);
@@ -336,6 +338,7 @@ function loadGame() {
         character.pos.x = data.pos.x;
         character.pos.y = data.pos.y;
         character.pos.angle = data.pos.angle;
+        character.name = usernameTb.value;
         document.getElementById('enter_sound').play();
         mainLoop();
     });
