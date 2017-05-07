@@ -29,6 +29,22 @@ function makeid()
     return text;
 }
 
+var leaderboard = [];
+
+function updateLeaderboard() {
+    full_ranking = [];
+    for (id in characterHistory) {
+        full_ranking.push(characterHistory[id]);
+    }
+    full_ranking.sort(compareScore);
+    leaderboard = (full_ranking.length >= 10) ? full_ranking.slice(0, 10) : full_ranking;
+    io.emit('update_leaderboard', leaderboard);
+}
+
+function compareScore(firstChar, secondChar) {
+    return secondChar.score - firstChar.score;
+}
+
 // event-handler for new incoming connections
 io.on('connection', function (socket) {
 
@@ -42,12 +58,10 @@ io.on('connection', function (socket) {
         characterHistory[data.id].x = data.pos.x;
         characterHistory[data.id].y = data.pos.y;
         characterHistory[data.id].angle = data.pos.angle;
+        characterHistory[data.id].name = data.name;
         // send line to all clients
         io.emit('update_characters', characterHistory);
         io.emit('update_specials', specials);
-        if (specials.length >= 1) {
-          console.log("specialX: " + specials[0].x.toString() + " specialY: " + specials[0].y.toString());
-        }
       }
    });
 
@@ -56,10 +70,9 @@ io.on('connection', function (socket) {
      var dead = [];
      var gotSpecials = [];
      var attackRadius = 40;
-     console.log("Attack has happened.");
      if (data.type == 'B') {
+       console.log(characterHistory[data.id].name + " used a special!");
        attackRadius = 80;
-       console.log("SUPER ATTACK");
      }
      for (var key in characterHistory) {
        if (characterHistory.hasOwnProperty(key)) {
@@ -82,18 +95,23 @@ io.on('connection', function (socket) {
        socket.broadcast.to(dead[i]).emit( 'character_died', '');
      }
      if (gotSpecials.length > 0) {
-       console.log("gotSpecial!! " + data.id);
        socket.emit('got_special','');
      }
      for (var j=0; j < gotSpecials.length; j++) {
        delete specials[gotSpecials[j]];
      }
      characterHistory[data.id].score += dead.length;
+     console.log(characterHistory[data.id].name + " has attacked and killed " + dead.length.toString() + " turtles.");
+     updateLeaderboard();
    });
 
    characterHistory[socket.id] = {x: Math.floor((Math.random()*2350)+25), y: Math.floor((Math.random()*1150)+25), score:0, angle:0, special:false};
    socket.emit('init_character', {id: socket.id, pos: characterHistory[socket.id]});
 
+   characterHistory[socket.id] = {x: Math.floor((Math.random()*2350)+25), y: Math.floor((Math.random()*1150)+25), score:0, angle:0, special:false};
+   socket.emit('init_character', {id: socket.id, pos: characterHistory[socket.id], name: 'Name ' + socket.id});
+
+   io.emit('update_leaderboard', leaderboard);
    socket.on('disconnect', function() {
      delete characterHistory[socket.id];
    });
@@ -104,7 +122,6 @@ function createSpecial() {
   var sid = makeid();
   if (Object.keys(specials).length < 5) {
     specials[sid] = {x:Math.floor((Math.random()*2350)+25) , y: Math.floor((Math.random()*1150)+25)};
-    console.log("Special being created " + specials[sid].x.toString());
   }
 
   setTimeout(createSpecial, 10000);
