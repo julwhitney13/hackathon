@@ -3,6 +3,8 @@ var height  = 500;
 var imageWidth = 30;
 var imageHeight = 50;
 var img= new Image();
+var view_radius = 130;
+var view_angle = Math.PI * 0.33;
 img.src = "https://image.ibb.co/bKH1ak/turlte4real.png";
 
 function draw_circle(context, x, y) {
@@ -131,20 +133,12 @@ function pointToAngle(x, y, originX, originY) {
     return theta;
 }
 
-<<<<<<< HEAD
 function characterAngle(character) {
     var mouseX = character.move_to.x;
     var mouseY = character.move_to.y;
     return pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y);
 }
 
-var width   = 500;
-var height  = 500;
-var view_radius = 130;
-var view_angle = Math.PI * 0.33;
-
-=======
->>>>>>> turtle rotate and multiplayer working
 document.addEventListener("DOMContentLoaded", function() {
     // get canvas element and create context
     var canvas  = document.getElementById('game');
@@ -204,21 +198,16 @@ document.addEventListener("DOMContentLoaded", function() {
 
         draw_view(context, character);
         // Draw myself.
-        draw_circle(context, character.pos.x, character.pos.y);
+        draw_turtle(context, character.pos.x, character.pos.y, character.angle);
         for (var i in all_characters) {
             other = all_characters[i];
             if (i != character.id && point_in_range(character, other.x, other.y)) {
-                draw_circle(context, other.x, other.y);
+                draw_turtle(context, other.x, other.y, other.angle);
             }
             if (i == character.id) {
               scoreBoard.innerHTML = all_characters[i].score.toString();
             }
-<<<<<<< HEAD
-=======
-            // draw_circle(context, all_characters[i].x, all_characters[i].y);
-            draw_turtle(context, all_characters[i].x, all_characters[i].y, all_characters[i].angle);
             console.log("id: " + i + " // angle: " + all_characters[i].angle.toString());
->>>>>>> turtle rotate and multiplayer working
         }
     });
 
