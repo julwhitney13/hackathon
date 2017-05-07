@@ -1,3 +1,6 @@
+// var $ = require('jquery');
+
+
 function draw_circle(canvas, x, y) {
     canvas.beginPath();
     canvas.arc(x, y, 10, 0, 2 * Math.PI, false);
@@ -7,6 +10,32 @@ function draw_circle(canvas, x, y) {
     canvas.lineWidth = 5;
     canvas.strokeStyle = '#003300';
     canvas.stroke();
+}
+
+function draw_turtle(context, character, x, y) {
+    // context.drawImageRot(context, img, w, h, 50, 80, );
+    var angleDeg = Math.atan2(character.move_to.y - y, character.move_to.x- x) * 180 / Math.PI;
+    drawImageRot(context, img, x, y, 50, 80, angleDeg);
+}
+
+function drawImageRot(context, img,x,y,width,height,deg){
+
+    // context.clearRect(0, 0, width, height);
+    //Convert degrees to radian 
+    var rad = deg * Math.PI / 180;
+
+    //Set the origin to the center of the image
+    context.translate(x + width / 2, y + height / 2);
+
+    //Rotate the canvas around the origin
+    context.rotate(rad);
+
+    //draw the image    
+    context.drawImage(img,width / 2 * (-1),height / 2 * (-1),width,height);
+
+    //reset the canvas  
+    context.rotate(rad * ( -1 ) );
+    context.translate((x + width / 2) * (-1), (y + height / 2) * (-1));
 }
 
 function move_character(character, new_x, new_y) {
@@ -38,17 +67,25 @@ function move_character_towards_cursor(character, mouseX, mouseY){
         var new_pos_x = character.pos.x + xDistance * 0.015;
         var new_pos_y = character.pos.y + yDistance * 0.015;
         move_character(character, new_pos_x, new_pos_y);
-   }
+
+        var angleDeg = Math.atan2(mouseY - new_pos_y, mouseX - new_pos_x) * 180 / Math.PI;
+        drawImageRot(context, img, new_pos_x, new_pos_y, 50, 80, angleDeg);
+    }
 }
 
 var width   = 500;
 var height  = 500;
+var img= new Image();
+img.src = "https://image.ibb.co/bKH1ak/turlte4real.png";
+
 
 document.addEventListener("DOMContentLoaded", function() {
+
     // get canvas element and create context
     var canvas  = document.getElementById('game');
     var scoreBoard  = document.getElementById('score');
     var context = canvas.getContext('2d');
+
     var socket  = io.connect();
 
     // set canvas to full browser width/height
@@ -63,7 +100,7 @@ document.addEventListener("DOMContentLoaded", function() {
     };
 
     canvas.onmousemove = function(e) {
-        move_character_towards_cursor(character, e.clientX, e.clientY);
+        move_character_towards_cursor(context, character, e.clientX, e.clientY);
         character.move = true;
     };
 
@@ -105,7 +142,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // main loop, running every 25ms
     function mainLoop() {
         if (character.move) {
-            move_character_towards_cursor(character, character.move_to.x, character.move_to.y);
+            move_character_towards_cursor(context, character, character.move_to.x, character.move_to.y);
         }
 
         if (character.id) {
