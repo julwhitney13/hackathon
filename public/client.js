@@ -90,25 +90,71 @@ function draw_view(canvas, character) {
     canvas.globalCompositeOperation = "source-over";
 }
 
-function move_character(character, new_x, new_y) {
-    if (new_x >= width) {
-        character.pos.x = width;
-    } else if (new_x <= -100) {
-        character.pos.x = 0;
-    } else {
+function move_character(character, new_x, new_y, viewOrigin) {
+    console.log("new_x: " + viewOrigin.left.toString() + " new_y: " + viewOrigin.top.toString());
+    // X
+    if ((new_x < 1000) && (new_x > 200)) {
         character.pos.x = new_x;
     }
+    else if ((new_x >= 1000) && ((viewOrigin.left + 1200) + (new_x - character.pos.x) < 2400)) {
+        character.pos.x = 1000;
+        viewOrigin.left += new_x - character.pos.x;
+    }
+    else if ((new_x <= 200) && (viewOrigin.left - (new_x - character.pos.x) > 0)) {
+        character.pos.x = 200;
+        viewOrigin.left -= character.pos.x - new_x;
+    }
+    else if ((new_x >= 1000) && ((viewOrigin.left + 1200) + (new_x - character.pos.x) >= 2400)) {
+        character.pos.x = new_x - (1200 - viewOrigin.left);
+        viewOrigin.left = 1200;
+    }
+    else if ((new_x <= 200) && (viewOrigin.left - (new_x - character.pos.x) <= 0)) {
+        character.pos.x = new_x - viewOrigin.left ;
+        viewOrigin.left = 0;
+    }
 
-    if (new_y >= height) {
-        character.pos.y = height;
-    } else if (new_y <= -100) {
-        character.pos.y = 0;
-    } else {
+    // Y
+    if ((new_y < 400) && (new_y > 200)) {
         character.pos.y = new_y;
     }
+    else if ((new_y >= 400) && ((viewOrigin.top + 600) + (new_y - character.pos.y) < 1200)) {
+        character.pos.y = 400;
+        viewOrigin.top += new_y - character.pos.y;
+    }
+    else if ((new_y <= 200) && (viewOrigin.top - (new_y - character.pos.y) > 0)) {
+        character.pos.y = 200;
+        viewOrigin.top -= character.pos.y - new_y;
+    }
+    else if ((new_y >= 400) && ((viewOrigin.top + 600) + (new_y - character.pos.y) >= 1200)) {
+        character.pos.y = new_y - (600 - viewOrigin.top);
+        viewOrigin.top = 1200;
+    }
+    else if ((new_y <= 200) && (viewOrigin.top - (new_y - character.pos.y) <= 0)) {
+        character.pos.y = new_y - viewOrigin.top ;
+        viewOrigin.top = 0;
+    }
+
+    //
+    // if (new_x >= width) {
+    //     character.pos.x = width;
+    // } else if (new_x <= -100) {
+    //     character.pos.x = 0;
+    // } else {
+    //     character.pos.x = new_x;
+    // }
+    //
+    //
+    // // Y
+    // if (new_y >= height) {
+    //     character.pos.y = height;
+    // } else if (new_y <= -100) {
+    //     character.pos.y = 0;
+    // } else {
+    //     character.pos.y = new_y;
+    // }
 }
 
-function move_character_towards_cursor(character, mouseX, mouseY){
+function move_character_towards_cursor(character, mouseX, mouseY, viewOrigin){
    character.pos.angle = pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y) + 1.5708
    character.move_to.x = mouseX;
    character.move_to.y = mouseY;
@@ -118,7 +164,7 @@ function move_character_towards_cursor(character, mouseX, mouseY){
    if (distance > 1) {
         var new_pos_x = character.pos.x + xDistance * 0.015;
         var new_pos_y = character.pos.y + yDistance * 0.015;
-        move_character(character, new_pos_x, new_pos_y);
+        move_character(character, new_pos_x, new_pos_y, viewOrigin);
    }
 
 }
@@ -157,11 +203,16 @@ document.addEventListener("DOMContentLoaded", function() {
         pos: {x:0, y:0, angle: 0}
     };
 
+    var viewOrigin = {
+        top:0,
+        left:0
+    }
+
     canvas.onmousemove = function(e) {
         var rect = document.getElementById('game').getBoundingClientRect();
         var mouseX = e.clientX - rect.left;
         var mouseY = e.clientY - rect.top;
-        move_character_towards_cursor(character, mouseX, mouseY);
+        move_character_towards_cursor(character, mouseX, mouseY, viewOrigin);
         character.move = true;
     };
 
@@ -181,7 +232,7 @@ document.addEventListener("DOMContentLoaded", function() {
         var attackX = character.pos.x + (xratio * attack_radius);
         var attackY = character.pos.y + (yratio * attack_radius);
 
-        var attack_position = {x: attackX, y: attackY};
+        var attack_position = {x: attackX+viewOrigin.left, y: attackY+viewOrigin.top};
 
         var attack = {id: character.id, attack: attack_position, type: 'A'};
         socket.emit('attack', attack);
@@ -198,16 +249,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
         draw_view(context, character);
         // Draw myself.
-        draw_turtle(context, character.pos.x, character.pos.y, character.pos.angle);
+        draw_turtle(context, character.pos.x - viewOrigin.left, character.pos.y - viewOrigin.top, character.pos.angle);
         for (var i in all_characters) {
             other = all_characters[i];
+            other.x -= viewOrigin.left;
+            other.y -= viewOrigin.top;
             if (i != character.id && point_in_range(character, other.x, other.y)) {
                 draw_turtle(context, other.x, other.y, other.angle);
             }
             if (i == character.id) {
               scoreBoard.innerHTML = all_characters[i].score.toString();
             }
-            console.log("id: " + i + " // angle: " + all_characters[i].angle.toString());
         }
     });
 
@@ -218,11 +270,14 @@ document.addEventListener("DOMContentLoaded", function() {
     // main loop, running every 25ms
     function mainLoop() {
         if (character.move) {
-            move_character_towards_cursor(character,character.move_to.x,character.move_to.y);
+            move_character_towards_cursor(character,character.move_to.x,character.move_to.y, viewOrigin);
         }
 
         if (character.id) {
-            socket.emit('move_character', character);
+            var correctedCharacter = character;
+            correctedCharacter.pos.x += viewOrigin.left;
+            correctedCharacter.pos.y += viewOrigin.top;
+            socket.emit('move_character', correctedCharacter);
         }
 
         setTimeout(mainLoop, 25);
