@@ -1,5 +1,5 @@
-var width   = 500;
-var height  = 500;
+var width   = 1200;
+var height  = 600;
 var imageWidth = 30;
 var imageHeight = 50;
 var img= new Image();

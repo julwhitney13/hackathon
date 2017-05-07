@@ -9,7 +9,7 @@ body, html{
 }
 #game {
     display: block;
-    width: 500px;
-    height: 500px;
+    width: 1200px;
+    height: 600px;
     border: 1px solid black;
 }
