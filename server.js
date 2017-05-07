@@ -26,30 +26,35 @@ io.on('connection', function (socket) {
    // add handler for message type "draw_line".
    socket.on('move_character', function (data) {
       // add received line to history
-      characterHistory[data.id]={x: data.pos.x, y: data.pos.y};
-      // send line to all clients
-      io.emit('update_characters', characterHistory);
+      if (data.id in characterHistory) {
+        characterHistory[data.id].x = data.pos.x;
+        characterHistory[data.id].y = data.pos.y;
+        characterHistory[data.id].angle = data.pos.angle;
+        // send line to all clients
+        io.emit('update_characters', characterHistory);
+        console.log("Angle:" + data.pos.angle.toString());
+      }
    });
 
    // {id:ID, attack:{x: X, y: Y}, type:'A'}
    socket.on('attack', function(data) {
-     console.log("Attack has happened.");
      var dead = [];
+     console.log("Attack has happened.");
      for (var key in characterHistory) {
        if (characterHistory.hasOwnProperty(key)) {
          var character = characterHistory[key];
-         if ((Math.abs(character.x - data.attack.x) <= 10) && (Math.abs(character.y - data.attack.y) <= 10) && (data.id != key)) {
+         if ((Math.abs(character.x - data.attack.x) <= 40) && (Math.abs(character.y - data.attack.y) <= 40) && (data.id != key)) {
            dead.push(key);
          }
        }
      }
      for (var i=0; i < dead.length; i++) {
        socket.broadcast.to(dead[i]).emit( 'character_died', '');
-       delete characterHistory[dead[i]];
      }
+     characterHistory[data.id].score += dead.length;
    });
 
-   characterHistory[socket.id] = {x: Math.floor((Math.random()*1990)+5), y: Math.floor((Math.random()*1990)+5)};
+   characterHistory[socket.id] = {x: Math.floor((Math.random()*490)+5), y: Math.floor((Math.random()*490)+5), score:0, angle:0};
    socket.emit('init_character', {id: socket.id, pos: characterHistory[socket.id]});
 
    socket.on('disconnect', function() {
