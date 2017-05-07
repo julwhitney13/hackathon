@@ -12,6 +12,116 @@ const mapHeight = 1200;
 var username = "";
 img.src = "https://image.ibb.co/bKH1ak/turlte4real.png";
 
+// Create sprite sheet
+var turtleImage = new Image();    
+turtleImage.src = "https://preview.ibb.co/gTjHFk/turtle_Sprite_Sheet.png";
+turtleImage.addEventListener("load", loadGame);
+
+(function() {
+    // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+    // http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+    // requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+    // MIT license
+
+    var lastTime = 0;
+    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+ 
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+ 
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+}());
+
+
+function sprite (options) {
+
+    var that = {},
+        frameIndex = 0,
+        tickCount = 0,
+        ticksPerFrame = options.ticksPerFrame || 0,
+        numberOfFrames = options.numberOfFrames || 1;
+    
+    that.context = options.context;
+    that.width = options.width;
+    that.height = options.height;
+    that.image = options.image;
+    
+    that.update = function () {
+
+        tickCount += 1;
+
+        if (tickCount > ticksPerFrame) {
+
+            tickCount = 0;
+            
+            // If the current frame index is in range
+            if (frameIndex < numberOfFrames - 1) {  
+                // Go to the next frame
+                frameIndex += 1;
+            } else {
+                frameIndex = 0;
+            }
+        }
+    };
+    
+    that.render = function (context) {
+    
+      // Clear the canvas
+      // that.context.clearRect(0, 0, that.width, that.height);
+      
+      // Draw the animation
+      context.save();
+      context.drawImage(
+        turtleImage,
+        frameIndex * that.width / numberOfFrames,
+        0,
+        that.width / numberOfFrames,
+        that.height,
+        that.width / 2 * (-1),
+        that.height / 2 * (-1),
+        that.width / numberOfFrames,
+        that.height);
+      context.restore();
+      console.log("render");
+    };
+
+    that.draw = function (context, x, y, angle) {
+        context.save();
+
+        //Set the origin to the center of the image
+        context.translate(x, y);
+        //Rotate the canvas around the origin
+        context.rotate(angle);
+        //draw the image
+        context.drawImage(img, imageWidth / 2 * (-1), imageHeight / 2 * (-1), imageWidth, imageHeight);
+
+        context.restore();
+    };
+    
+    return that;
+}
+
+
+
+// Load sprite sheet
+// coinImage.addEventListener("onmousedown", gameLoop);
+
+
 function draw_circle(context, x, y) {
     context.beginPath();
     context.arc(x, y, 10, 0, 2 * Math.PI, false);
@@ -23,7 +133,7 @@ function draw_circle(context, x, y) {
     context.stroke();
 }
 
-function draw_turtle(context, x, y, angle) {
+function draw_turtle(turtleSprite, context, x, y, angle) {
   context.save();
 
   //Set the origin to the center of the image
@@ -31,7 +141,7 @@ function draw_turtle(context, x, y, angle) {
   //Rotate the canvas around the origin
   context.rotate(angle);
   //draw the image
-  context.drawImage(img,imageWidth / 2 * (-1),imageHeight / 2 * (-1),imageWidth,imageHeight);
+  context.drawImage(turtleSprite, imageWidth / 2 * (-1),imageHeight / 2 * (-1),imageWidth,imageHeight);
 
   context.restore();
 }
@@ -216,6 +326,7 @@ function resetGame() {
   usernameTb.value = username;
 }
 
+var attacking = false;
 function loadGame() {
     // get canvas element and create context
     var setupDiv = document.getElementById('setupDiv');
@@ -225,6 +336,14 @@ function loadGame() {
     var context = canvas.getContext('2d');
     var socket  = io.connect();
     var connected = true;
+    var turtleSprite = sprite({
+            context: context,
+            width: imageWidth * 3,
+            height: imageHeight,
+            image: turtleImage,
+            numberOfFrames: 3,
+            ticksPerFrame: 20
+    });
 
     // set canvas to full browser width/height
     canvas.width = width;
@@ -253,6 +372,8 @@ function loadGame() {
     };
 
     canvas.onmousedown = function(e) {
+                // Create sprite
+        attacking = true;
         var rect = document.getElementById('game').getBoundingClientRect();
 
         var mouseX = e.clientX - rect.left;
@@ -272,11 +393,21 @@ function loadGame() {
 
         var attack = {id: character.id, attack: attack_position, type: 'A'};
         socket.emit('attack',attack);
+
         document.getElementById('attack_sound').play();
+
+        console.log("down");
     };
+
+    canvas.onmouseup = function(e) {
+        console.log("up");
+        attacking = false;
+    }
 
     // draw line received from server
     socket.on('update_characters', function (all_characters) {
+
+
         context.clearRect(0, 0, canvas.width, canvas.height);
         canvas.style.backgroundPosition = '-' + viewOrigin.left.toString() + 'px -' + viewOrigin.top.toString() + 'px';
         context.rect(0, 0, canvas.width, canvas.height);
@@ -287,13 +418,24 @@ function loadGame() {
 
         draw_view(context, character);
         // Draw myself.
-        draw_turtle(context, character.pos.x, character.pos.y, character.pos.angle);
+
+        // turtleSprite.draw(context, character.pos.x, character.pos.y, character.pos.angle);
+        if (attacking) {
+            turtleSprite.update();
+            turtleSprite.render(context);
+            console.log("HERE");
+        } else {
+            turtleSprite.draw(context, character.pos.x, character.pos.y, character.pos.angle);
+            // draw_turtle(turtleSprite, context, character.pos.x, character.pos.y, character.pos.angle);
+        }
+
         for (var i in all_characters) {
             other = all_characters[i];
             other.x -= viewOrigin.left;
             other.y -= viewOrigin.top;
             if (i != character.id && point_in_range(character, other.x, other.y)) {
-                draw_turtle(context, other.x, other.y, other.angle);
+                turtleSprite.draw(context, other.x, other.y, other.angle);
+                // draw_turtle(turtleSprite, context, other.x, other.y, other.angle);
             }
             if (i == character.id) {
               scoreBoard.innerHTML = all_characters[i].score.toString();

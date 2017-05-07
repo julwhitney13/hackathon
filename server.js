@@ -16,7 +16,7 @@ console.log("Server running on 127.0.0.1:8080");
 // characters are 5 x 5
 
 var characterHistory = {};
-
+var attack = false;
 // event-handler for new incoming connections
 io.on('connection', function (socket) {
 
@@ -31,8 +31,10 @@ io.on('connection', function (socket) {
         characterHistory[data.id].y = data.pos.y;
         characterHistory[data.id].angle = data.pos.angle;
         // send line to all clients
-        io.emit('update_characters', characterHistory);
-        console.log("Angle:" + data.pos.angle.toString());
+            console.log("ATTACK");
+            io.emit('update_characters', characterHistory);
+
+        // io.emit('update_characters', characterHistory, attack);
       }
    });
 
@@ -40,6 +42,8 @@ io.on('connection', function (socket) {
    socket.on('attack', function(data) {
      var dead = [];
      console.log("Attack has happened.");
+     // attack = true;
+    io.emit('update_characters', characterHistory);
      for (var key in characterHistory) {
        if (characterHistory.hasOwnProperty(key)) {
          var character = characterHistory[key];
@@ -52,6 +56,7 @@ io.on('connection', function (socket) {
        socket.broadcast.to(dead[i]).emit( 'character_died', '');
      }
      characterHistory[data.id].score += dead.length;
+     attack = false;
    });
 
    characterHistory[socket.id] = {x: Math.floor((Math.random()*490)+5), y: Math.floor((Math.random()*490)+5), score:0, angle:0};
