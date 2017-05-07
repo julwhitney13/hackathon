@@ -40,6 +40,16 @@ function move_character_towards_cursor(character, mouseX, mouseY){
    }
 }
 
+function pointToAngle(x, y, originX, originY) {
+    var dx = x - originX;
+    var dy = y - originY;
+    var theta = Math.atan2(dy, dx);
+    if (theta < 0) {
+        theta += (2 * Math.PI);
+    }
+    return theta;
+}
+
 var width   = 500;
 var height  = 500;
 
