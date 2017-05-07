@@ -9,6 +9,7 @@ const deg90 = 1.5708;
 const border = 200;
 const mapWidth = 2400;
 const mapHeight = 1200;
+var username = "";
 img.src = "https://image.ibb.co/bKH1ak/turlte4real.png";
 
 function draw_circle(context, x, y) {
@@ -99,19 +100,16 @@ function draw_view(canvas, character) {
 }
 
 function move_character(character, new_x, new_y, viewOrigin) {
-    //console.log("pos_x: " + character.pos.x.toString() + " new_x: " + new_x.toString());
     // X
     var viewPortDeltaX = 0;
     if ((new_x >= width-border) && ((viewOrigin.left + width) + (new_x - character.pos.x) < mapWidth) && (character.pos.x < new_x)) {
         viewPortDeltaX = new_x - character.pos.x;
         character.pos.x = width-border;
         viewOrigin.left += viewPortDeltaX;
-        console.log("XCase 1: ");
         character.move_to.x -= viewPortDeltaX;
     }
     else if ((new_x <= border) && ((viewOrigin.left - (character.pos.x - new_x)) > 0) && (character.pos.x > new_x)) {
         viewPortDeltaX = character.pos.x - new_x;
-        console.log("XCase 2: " + (viewOrigin.left - (character.pos.x - new_x)).toString());
         character.pos.x = border;
         viewOrigin.left -= viewPortDeltaX;
         character.move_to.x += viewPortDeltaX;
@@ -121,18 +119,15 @@ function move_character(character, new_x, new_y, viewOrigin) {
         character.pos.x += (new_x - character.pos.x) - viewPortDeltaX;
         viewOrigin.left = mapWidth - width;
         character.move_to.x -= viewPortDeltaX;
-        console.log("XCase 3:");
     }
     else if ((new_x <= border) && (viewOrigin.left - (character.pos.x - new_x) <= 0)) {
         viewPortDeltaX = viewOrigin.left;
         character.pos.x = new_x - viewOrigin.left;
         viewOrigin.left = 0;
         character.move_to.x += viewPortDeltaX;
-        console.log("XCase 4:");
     }
     else if ((new_x < width) && (new_x > 0)) {
       character.pos.x = new_x;
-      console.log("XCase 5: ");
     }
     else if (new_x <= 0) {
         character.pos.x = 0;
@@ -147,12 +142,10 @@ function move_character(character, new_x, new_y, viewOrigin) {
         viewPortDeltaY = new_y - character.pos.y;
         character.pos.y = height-border;
         viewOrigin.top += viewPortDeltaY;
-        console.log("XCase 1: ");
         character.move_to.y -= viewPortDeltaY;
     }
     else if ((new_y <= border) && ((viewOrigin.top - (character.pos.y - new_y)) > 0) && (character.pos.y > new_y)) {
         viewPortDeltaY = character.pos.y - new_y;
-        console.log("XCase 2: " + (viewOrigin.top - (character.pos.y - new_y)).toString());
         character.pos.y = border;
         viewOrigin.top -= viewPortDeltaY;
         character.move_to.y += viewPortDeltaY;
@@ -162,18 +155,15 @@ function move_character(character, new_x, new_y, viewOrigin) {
         character.pos.y += (new_y - character.pos.y) - viewPortDeltaY;
         viewOrigin.top = mapHeight - height;
         character.move_to.y -= viewPortDeltaY;
-        console.log("XCase 3:");
     }
     else if ((new_y <= border) && (viewOrigin.top - (character.pos.y - new_y) <= 0)) {
         viewPortDeltaY = viewOrigin.top;
         character.pos.y = new_y - viewOrigin.top;
         viewOrigin.top = 0;
         character.move_to.y += viewPortDeltaY;
-        console.log("XCase 4:");
     }
     else if ((new_y < height) && (new_y > 0)) {
       character.pos.y = new_y;
-      console.log("XCase 5: ");
     }
     else if (new_y <= 0) {
         character.pos.y = 0;
@@ -182,26 +172,6 @@ function move_character(character, new_x, new_y, viewOrigin) {
         character.pos.y = height;
     }
 
-    //
-    // if (new_x >= width) {
-    //     character.pos.x = width;
-    // } else if (new_x <= -100) {
-    //     character.pos.x = 0;
-    // } else {
-    //     character.pos.x = new_x;
-    // }
-    //
-    //
-    // // Y
-    // if (new_y >= height) {
-    //     character.pos.y = height;
-    // } else if (new_y <= -100) {
-    //     character.pos.y = 0;
-    // } else {
-    //     character.pos.y = new_y;
-    // }
-
-    console.log("pos_x: " + character.pos.x.toString() + " // viewOriginX: " + viewOrigin.left.toString() + "new_x: " + new_x.toString());
 }
 
 function move_character_towards_cursor(character, mouseX, mouseY, viewOrigin){
@@ -214,9 +184,6 @@ function move_character_towards_cursor(character, mouseX, mouseY, viewOrigin){
    if (distance > 1) {
         var new_pos_x = character.pos.x + xDistance * 0.015;
         var new_pos_y = character.pos.y + yDistance * 0.015;
-        if (new_pos_x >= 1000) {
-            console.log("xDistance: " + xDistance.toString() + " mouseX: " + mouseX.toString());
-        }
         move_character(character, new_pos_x, new_pos_y, viewOrigin);
    }
 
@@ -240,10 +207,13 @@ function characterAngle(character) {
 
 function resetGame() {
   var setupDiv = document.getElementById('setupDiv');
+
   setupDiv.innerHTML ='<form action="" method="get" id="nameform" align="center"> \
   Username: <input type="text" name="username" id="username"> \
     <input type="button" onclick="loadGame()" value="Start"> \
   </form>';
+  var usernameTb = document.getElementById('username');
+  usernameTb.value = username;
 }
 
 function loadGame() {
@@ -271,8 +241,8 @@ function loadGame() {
         top:0,
         left:0
     }
-
-    setupDiv.innerHTML = '<p align="center">Username: ' + usernameTb.value + '</p>';
+    username = usernameTb.value;
+    setupDiv.innerHTML = '<p align="center">Username: ' + username + '</p>';
 
     canvas.onmousemove = function(e) {
         var rect = document.getElementById('game').getBoundingClientRect();
@@ -301,8 +271,8 @@ function loadGame() {
         var attack_position = {x: attackX+viewOrigin.left, y: attackY+viewOrigin.top};
 
         var attack = {id: character.id, attack: attack_position, type: 'A'};
-        document.getElementById('clash_sound').play();
-        audio.play();
+        socket.emit('attack',attack);
+        document.getElementById('attack_sound').play();
     };
 
     // draw line received from server
@@ -332,12 +302,12 @@ function loadGame() {
     });
 
     socket.on('character_died', function () {
-        document.getElementById('attack_sound').play();
         resetGame();
         connected = false;
         scoreBoard.innerHTML = "DEAD";
         context.clearRect(0, 0, canvas.width, canvas.height);
         socket.disconnect();
+        document.getElementById('death_sound').play();
     });
 
     // main loop, running every 25ms
