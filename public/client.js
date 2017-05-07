@@ -134,7 +134,8 @@ document.addEventListener("DOMContentLoaded", function() {
             if (i == character.id) {
               scoreBoard.innerHTML = all_characters[i].score.toString();
             }
-            draw_circle(context, all_characters[i].x, all_characters[i].y);
+            draw_turtle(context, all_characters[i], all_characters[i].x, all_characters[i].y);
+            // draw_circle(context, all_characters[i].x, all_characters[i].y);
         }
     });
 
