@@ -15,13 +15,11 @@ console.log("Server running on 127.0.0.1:8080");
 // 2000 x 2000
 // characters are 5 x 5
 
-var characterHistory = [];
+var characterHistory = {};
 
 // event-handler for new incoming connections
 io.on('connection', function (socket) {
 
-   characterHistory.push({x: ((Math.random()*1990)+5), y: ((Math.random()*1990)+5)});
-   socket.emit('init_character', {id: characterHistory.length-1, pos: characterHistory[characterHistory.length-1]});
    // first send the history to the new client
    socket.emit('update_characters', characterHistory);
 
@@ -31,5 +29,30 @@ io.on('connection', function (socket) {
       characterHistory[data.id]={x: data.pos.x, y: data.pos.y};
       // send line to all clients
       io.emit('update_characters', characterHistory);
+   });
+
+   // {id:ID, attack:{x: X, y: Y}, type:'A'}
+   socket.on('attack', function(data) {
+     console.log("Attack has happened.");
+     var dead = [];
+     for (var key in characterHistory) {
+       if (characterHistory.hasOwnProperty(key)) {
+         var character = characterHistory[key];
+         if ((Math.abs(character.x - data.attack.x) <= 10) && (Math.abs(character.y - data.attack.y) <= 10) && (data.id != key)) {
+           dead.push(key);
+         }
+       }
+     }
+     for (var i=0; i < dead.length; i++) {
+       socket.broadcast.to(dead[i]).emit( 'character_died', '');
+       delete characterHistory[dead[i]];
+     }
+   });
+
+   characterHistory[socket.id] = {x: Math.floor((Math.random()*1990)+5), y: Math.floor((Math.random()*1990)+5)};
+   socket.emit('init_character', {id: socket.id, pos: characterHistory[socket.id]});
+
+   socket.on('disconnect', function() {
+     delete characterHistory[socket.id];
    });
 });
