@@ -3,8 +3,8 @@ var view_radius = 130;
 var view_angle = Math.PI * 0.33;
 const width = 1200;
 const height = 600;
-const imageWidth = 30;
-const imageHeight = 50;
+const imageWidth = 50;
+const imageHeight = 80;
 const deg90 = 1.5708;
 const border = 200;
 const mapWidth = 2400;
@@ -78,17 +78,21 @@ function draw_view(canvas, character) {
 
     var left = transpose_point(arcCenterX, arcCenterY, character.pos.x, character.pos.y, view_angle);
     var right = transpose_point(arcCenterX, arcCenterY, character.pos.x, character.pos.y, -view_angle);
+
     canvas.beginPath();
     canvas.arc(character.pos.x, character.pos.y, view_radius, arcS, arcE, false);
+    var grd=canvas.createRadialGradient(character.pos.x,character.pos.y,view_radius * 0.90, character.pos.x,character.pos.y,view_radius);
+    grd.addColorStop(0,"#ccff00");
+    grd.addColorStop(1,"transparent");
+
     canvas.moveTo(character.pos.x, character.pos.y);
     canvas.lineTo(left.x, left.y);
     canvas.lineTo(right.x, right.y);
-    canvas.lineTo(character.pos.x, character.pos.y)
     canvas.closePath();
-    canvas.fillStyle = 'black';
+    canvas.fillStyle = grd;
     canvas.fill();
-    canvas.lineWidth = 1;
-    canvas.strokeStyle = '#000000';
+    canvas.lineWidth = 0;
+    canvas.strokeStyle = grd;
     canvas.stroke();
 
     canvas.globalCompositeOperation = "source-over";
@@ -292,7 +296,7 @@ document.addEventListener("DOMContentLoaded", function() {
         context.clearRect(0, 0, canvas.width, canvas.height);
         canvas.style.backgroundPosition = '-' + viewOrigin.left.toString() + 'px -' + viewOrigin.top.toString() + 'px';
         context.rect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = 'black';
+        context.fillStyle = 'rgba(47, 79, 79, 0.80)';
         context.fill();
         context.strokeStyle = '#000000';
         context.stroke();
