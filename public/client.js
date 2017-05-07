@@ -1,12 +1,32 @@
-function draw_circle(canvas, x, y) {
-    canvas.beginPath();
-    canvas.arc(x, y, 10, 0, 2 * Math.PI, false);
-    canvas.closePath();
-    canvas.fillStyle = 'green';
-    canvas.fill();
-    canvas.lineWidth = 5;
-    canvas.strokeStyle = '#003300';
-    canvas.stroke();
+var width   = 500;
+var height  = 500;
+var imageWidth = 30;
+var imageHeight = 50;
+var img= new Image();
+img.src = "https://image.ibb.co/bKH1ak/turlte4real.png";
+
+function draw_circle(context, x, y) {
+    context.beginPath();
+    context.arc(x, y, 10, 0, 2 * Math.PI, false);
+    context.closePath();
+    context.fillStyle = 'green';
+    context.fill();
+    context.lineWidth = 5;
+    context.strokeStyle = '#003300';
+    context.stroke();
+}
+
+function draw_turtle(context, x, y, angle) {
+  context.save();
+
+  //Set the origin to the center of the image
+  context.translate(x + imageWidth / 2, y + imageHeight / 2);
+  //Rotate the canvas around the origin
+  context.rotate(angle);
+  //draw the image
+  context.drawImage(img,imageWidth / 2 * (-1),imageHeight / 2 * (-1),imageWidth,imageHeight);
+
+  context.restore();
 }
 
 function move_character(character, new_x, new_y) {
@@ -28,17 +48,18 @@ function move_character(character, new_x, new_y) {
 }
 
 function move_character_towards_cursor(character, mouseX, mouseY){
-    var rect = document.getElementById('game').getBoundingClientRect();
-    character.move_to.x = mouseX;
-    character.move_to.y = mouseY;
-   var xDistance = mouseX - character.pos.x - rect.left;
-   var yDistance = mouseY - character.pos.y - rect.top;
+   character.pos.angle = pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y) + 1.5708
+   character.move_to.x = mouseX;
+   character.move_to.y = mouseY;
+   var xDistance = mouseX - character.pos.x;
+   var yDistance = mouseY - character.pos.y;
    var distance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
    if (distance > 1) {
         var new_pos_x = character.pos.x + xDistance * 0.015;
         var new_pos_y = character.pos.y + yDistance * 0.015;
         move_character(character, new_pos_x, new_pos_y);
    }
+
 }
 
 function pointToAngle(x, y, originX, originY) {
@@ -50,9 +71,6 @@ function pointToAngle(x, y, originX, originY) {
     }
     return theta;
 }
-
-var width   = 500;
-var height  = 500;
 
 document.addEventListener("DOMContentLoaded", function() {
     // get canvas element and create context
@@ -66,22 +84,27 @@ document.addEventListener("DOMContentLoaded", function() {
     canvas.height = height;
 
     var character = {
+        move_to:{x:0,y:0},
         move: false,
-        move_to: {x:0, y:0},
         id: false,
-        pos: {x:0, y:0}
+        pos: {x:0, y:0, angle: 0}
     };
 
     canvas.onmousemove = function(e) {
-        move_character_towards_cursor(character, e.clientX, e.clientY);
+        var rect = document.getElementById('game').getBoundingClientRect();
+        var mouseX = e.clientX - rect.left;
+        var mouseY = e.clientY - rect.top;
+        move_character_towards_cursor(character, mouseX, mouseY);
         character.move = true;
     };
 
     canvas.onmousedown = function(e) {
         var rect = document.getElementById('game').getBoundingClientRect();
-        attack_radius = 20.0;
-        w = e.clientX - (character.pos.x + rect.left);
-        h = e.clientY - (character.pos.y + rect.top);
+        var mouseX = e.clientX - rect.left;
+        var mouseY = e.clientY - rect.top;
+        attack_radius = 80.0;
+        w = mouseX - character.pos.x;
+        h = mouseY - character.pos.y;
         hypo = Math.sqrt((w * w) + (h * h));
 
         xratio = w / hypo;
@@ -104,7 +127,9 @@ document.addEventListener("DOMContentLoaded", function() {
             if (i == character.id) {
               scoreBoard.innerHTML = all_characters[i].score.toString();
             }
-            draw_circle(context, all_characters[i].x, all_characters[i].y);
+            // draw_circle(context, all_characters[i].x, all_characters[i].y);
+            draw_turtle(context, all_characters[i].x, all_characters[i].y, all_characters[i].angle);
+            console.log("id: " + i + " // angle: " + all_characters[i].angle.toString());
         }
     });
 
@@ -115,12 +140,13 @@ document.addEventListener("DOMContentLoaded", function() {
     // main loop, running every 25ms
     function mainLoop() {
         if (character.move) {
-            move_character_towards_cursor(character, character.move_to.x, character.move_to.y);
+            move_character_towards_cursor(character,character.move_to.x,character.move_to.y);
         }
 
         if (character.id) {
-          socket.emit('move_character', character);
+            socket.emit('move_character', character);
         }
+
         setTimeout(mainLoop, 25);
     }
 
@@ -128,6 +154,7 @@ document.addEventListener("DOMContentLoaded", function() {
         character.id = data.id;
         character.pos.x = data.pos.x;
         character.pos.y = data.pos.y;
+        character.pos.angle = data.pos.angle;
         mainLoop();
     });
 });
