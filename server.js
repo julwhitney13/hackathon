@@ -44,7 +44,7 @@ io.on('connection', function (socket) {
      }
      for (var i=0; i < dead.length; i++) {
        delete characterHistory[dead[i]];
-       io.sockets.socket(dead[i]).emit("character_died");
+       io.socket(dead[i]).emit("character_died");
      }
    });
 
