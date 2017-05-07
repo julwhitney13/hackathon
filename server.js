@@ -36,7 +36,7 @@ io.on('connection', function (socket) {
      for (var key in characterHistory) {
        if (characterHistory.hasOwnProperty(key)) {
          var character = characterHistory[key];
-         if (Math.abs(character.x - data.attack.x) <= 2) && (Math.abs(character.y - data.attack.y) <= 2) {
+         if ((Math.abs(character.x - data.attack.x) <= 2) && (Math.abs(character.y - data.attack.y) <= 2)) {
            io.emit('character_dead', {id:i});
          }
        }
