@@ -114,8 +114,7 @@ function characterAngle(character) {
     var mouseX = character.move_to.x;
     var mouseY = character.move_to.y;
     return pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y);
-   }
-
+}
 
 var width   = 500;
 var height  = 500;
