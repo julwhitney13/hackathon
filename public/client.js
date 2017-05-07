@@ -238,12 +238,23 @@ function characterAngle(character) {
     return pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y);
 }
 
-document.addEventListener("DOMContentLoaded", function() {
+function resetGame() {
+  var setupDiv = document.getElementById('setupDiv');
+  setupDiv.innerHTML ='<form action="" method="get" id="nameform" align="center"> \
+  Username: <input type="text" name="username" id="username"> \
+    <input type="button" onclick="loadGame()" value="Start"> \
+  </form>';
+}
+
+function loadGame() {
     // get canvas element and create context
+    var setupDiv = document.getElementById('setupDiv');
+    var usernameTb = document.getElementById('username');
     var canvas  = document.getElementById('game');
     var scoreBoard  = document.getElementById('score');
     var context = canvas.getContext('2d');
     var socket  = io.connect();
+    var connected = true;
 
     // set canvas to full browser width/height
     canvas.width = width;
@@ -260,6 +271,8 @@ document.addEventListener("DOMContentLoaded", function() {
         top:0,
         left:0
     }
+
+    setupDiv.innerHTML = '<p align="center">Username: ' + usernameTb.value + '</p>';
 
     canvas.onmousemove = function(e) {
         var rect = document.getElementById('game').getBoundingClientRect();
@@ -320,8 +333,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
     socket.on('character_died', function () {
         document.getElementById('attack_sound').play();
-        // window.location = 'https://yourwaifuisshit.com';
-
+        resetGame();
+        connected = false;
+        scoreBoard.innerHTML = "DEAD";
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        socket.disconnect();
     });
 
     // main loop, running every 25ms
@@ -340,7 +356,9 @@ document.addEventListener("DOMContentLoaded", function() {
             socket.emit('move_character', correctedCharacter);
         }
 
-        setTimeout(mainLoop, 25);
+        if (connected) {
+          setTimeout(mainLoop, 25);
+        }
     }
 
     socket.on('init_character', function(data) {
@@ -351,4 +369,4 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('enter_sound').play();
         mainLoop();
     });
-});
+}
