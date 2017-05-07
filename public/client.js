@@ -290,6 +290,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // draw line received from server
     socket.on('update_characters', function (all_characters) {
         context.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.backgroundPosition = '-' + viewOrigin.left.toString() + 'px -' + viewOrigin.top.toString() + 'px';
         context.rect(0, 0, canvas.width, canvas.height);
         context.fillStyle = 'black';
         context.fill();

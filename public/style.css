@@ -1,4 +1,4 @@
-* { 
+* {
     margin: 0;
     padding: 0;
 }
@@ -12,9 +12,9 @@ body, html{
     width: 1200px;
     height: 600px;
     border: 1px solid black;
-    background: url("http://i.cubeupload.com/UBLQIY.jpg") no-repeat center center fixed; 
-    -webkit-background-size: cover;
-    -moz-background-size: cover;
-    -o-background-size: cover;
-    background-size: cover;
+    background: url("http://i.cubeupload.com/UBLQIY.jpg") no-repeat center center fixed;
+    -webkit-background-size: 200% 200%;
+    -moz-background-size: 200% 200%;
+    -o-background-size: 200% 200%;
+    background-size: 200% 200%;
 }
