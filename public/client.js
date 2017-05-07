@@ -318,7 +318,9 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     socket.on('character_died', function () {
-        window.location = 'https://yourwaifuisshit.com';
+        document.getElementById('attack_sound').play();
+        // window.location = 'https://yourwaifuisshit.com';
+
     });
 
     // main loop, running every 25ms
