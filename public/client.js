@@ -289,6 +289,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
         var attack = {id: character.id, attack: attack_position, type: 'A'};
         socket.emit('attack', attack);
+        var audio = new Audio('audio/clash.mp3');
+        audio.play();
     };
 
     // draw line received from server
@@ -347,6 +349,8 @@ document.addEventListener("DOMContentLoaded", function() {
         character.pos.x = data.pos.x;
         character.pos.y = data.pos.y;
         character.pos.angle = data.pos.angle;
+        var audio = new Audio('audio/enter.mp3');
+        audio.play();
         mainLoop();
     });
 });
