@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     socket.on('character_died', function () {
-        window.location.replace('https://www.yourwaifuisshit.com');
+        window.location = 'https://yourwaifuisshit.com';
     });
 
     // main loop, running every 25ms

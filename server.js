@@ -33,18 +33,19 @@ io.on('connection', function (socket) {
 
    // {id:ID, attack:{x: X, y: Y}, type:'A'}
    socket.on('attack', function(data) {
+     console.log("Attack has happened.");
      var dead = [];
      for (var key in characterHistory) {
        if (characterHistory.hasOwnProperty(key)) {
          var character = characterHistory[key];
          if ((Math.abs(character.x - data.attack.x) <= 10) && (Math.abs(character.y - data.attack.y) <= 10) && (data.id != key)) {
-           dead.push({id:key});
+           dead.push(key);
          }
        }
      }
      for (var i=0; i < dead.length; i++) {
+       socket.broadcast.to(dead[i]).emit( 'character_died', '');
        delete characterHistory[dead[i]];
-       io.socket(dead[i]).emit("character_died");
      }
    });
 
