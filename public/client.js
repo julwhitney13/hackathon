@@ -33,7 +33,6 @@ function draw_circle(context, x, y) {
     context.closePath();
     context.fillStyle = 'green';
     context.fill();
-    context.lineWidth = 5;
     context.strokeStyle = '#003300';
     context.stroke();
 }

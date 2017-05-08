@@ -102,8 +102,8 @@ io.on('connection', function (socket) {
      }
      if (characterHistory.hasOwnProperty(data.id)) {
        characterHistory[data.id].score += dead.length;
+       console.log(characterHistory[data.id].name + " has attacked and killed " + dead.length.toString() + " turtles.");
      }
-     console.log(characterHistory[data.id].name + " has attacked and killed " + dead.length.toString() + " turtles.");
      updateLeaderboard();
    });
 
