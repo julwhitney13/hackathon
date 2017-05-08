@@ -100,7 +100,9 @@ io.on('connection', function (socket) {
      for (var j=0; j < gotSpecials.length; j++) {
        delete specials[gotSpecials[j]];
      }
-     characterHistory[data.id].score += dead.length;
+     if (characterHistory.hasOwnProperty(data.id)) {
+       characterHistory[data.id].score += dead.length;
+     }
      console.log(characterHistory[data.id].name + " has attacked and killed " + dead.length.toString() + " turtles.");
      updateLeaderboard();
    });
