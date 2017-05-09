@@ -1,4 +1,5 @@
 var img = new Image();
+var others = new Image();
 var normal_img= new Image();
 var attack_img_a = new Image();
 var attack_img_b = new Image();
@@ -8,7 +9,7 @@ var special_attack_img_b = new Image();
 
 var view_radius = 130;
 var view_angle = Math.PI * 0.33;
-var cached_board = [];
+var cached_leaderboard = [];
 
 const width = 1200;
 const height = 600;
@@ -26,8 +27,13 @@ special_img.src = "image/s1.png";
 special_attack_img_a.src = "image/s2.png";
 special_attack_img_b.src = "image/s3.png";
 img = normal_img;
+others = normal_img;
 
-function draw_circle(context, x, y) {
+/*----------------------------------------------------------------------------*/
+/*------------------------------[Draw Functions]------------------------------*/
+/*----------------------------------------------------------------------------*/
+
+function drawCircle(context, x, y) {
     context.beginPath();
     context.arc(x, y, 10, 0, 2 * Math.PI, false);
     context.closePath();
@@ -37,7 +43,7 @@ function draw_circle(context, x, y) {
     context.stroke();
 }
 
-function draw_turtle(context, x, y, angle, character) {
+function drawTurtle(context, x, y, angle, character) {
   var turtle_image = img;
   context.save();
 
@@ -51,67 +57,7 @@ function draw_turtle(context, x, y, angle, character) {
   context.restore();
 }
 
-function truncate_name(name) {
-    if (name.length >= 10) {
-        return name.slice(0, 10);
-    }
-    else {
-        var missing = 10 - name.length;
-        return name + ' '.repeat(missing);
-    }
-}
-
-function transpose_point(x, y, originX, originY, theta) {
-    x = x - originX;
-    y = y - originY;
-    var newX = (Math.cos(theta) * x) - (Math.sin(theta) * y);
-    var newY = (Math.sin(theta) * x) + (Math.cos(theta) * y);
-    return {x: newX + originX, y: newY + originY};
-}
-
-function point_in_range(character, x, y) {
-    var xDistance = x - character.pos.x;
-    var yDistance = y - character.pos.y;
-    var distance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
-
-    var character_direction = characterAngle(character);
-    var point_angle = pointToAngle(x, y, character.pos.x, character.pos.y);
-
-    var facing_player = (point_angle >= (character_direction - view_angle));
-    facing_player &= (point_angle <= (character_direction + view_angle));
-
-    return (distance <= view_radius) && facing_player;
-}
-
-function draw_leaderboard(canvas) {
-    if (cached_board.length == 0) {
-        return;
-    }
-
-    var lbHeight = (cached_board.length * 18) + 29;
-    var lbWidth = 250;
-
-    canvas.fillStyle = 'rgba(240, 240, 240, 0.6)';
-    canvas.fillRect(5, 5, lbWidth, lbHeight);
-    canvas.strokeStyle = 'rgba(44, 44, 44, 0.95)';
-    canvas.strokeRect(5,5, lbWidth, lbHeight);
-    canvas.lineWidth = 5;
-    canvas.font = '20px Hack';
-    canvas.fillStyle = 'rgba(50, 50, 50, 1.0)';
-    canvas.fillText('Leaderboard', 10, 25);
-    canvas.font = '16px Hack';
-    var x = 10;
-    var y = 43;
-    for (leader in cached_board) {
-        var name = truncate_name(cached_board[leader].name);
-        var leader_msg = (parseInt(leader) + 1).toString() + '. ' + name + "  Score: " + cached_board[leader].score;
-        canvas.fillText(leader_msg, x, y);
-        y += 18;
-    }
-    canvas.lineWidth = 1;
-}
-
-function draw_view(canvas, character) {
+function drawView(canvas, character) {
     canvas.globalCompositeOperation = "destination-out";
     var mouseX = character.move_to.x;
     var mouseY = character.move_to.y;
@@ -130,8 +76,8 @@ function draw_view(canvas, character) {
     var arcS = character_direction - view_angle;
     var arcE = character_direction + view_angle;
 
-    var left = transpose_point(arcCenterX, arcCenterY, character.pos.x, character.pos.y, view_angle);
-    var right = transpose_point(arcCenterX, arcCenterY, character.pos.x, character.pos.y, -view_angle);
+    var left = transposePoint(arcCenterX, arcCenterY, character.pos.x, character.pos.y, view_angle);
+    var right = transposePoint(arcCenterX, arcCenterY, character.pos.x, character.pos.y, -view_angle);
 
     canvas.beginPath();
     canvas.arc(character.pos.x, character.pos.y, view_radius, arcS, arcE, false);
@@ -151,6 +97,41 @@ function draw_view(canvas, character) {
 
     canvas.globalCompositeOperation = "source-over";
 }
+
+function drawLeaderboard(canvas) {
+    if (cached_leaderboard.length == 0) {
+        return;
+    }
+
+    var lbHeight = (cached_leaderboard.length * 18) + 29;
+    var lbWidth = 250;
+
+    canvas.fillStyle = 'rgba(240, 240, 240, 0.6)';
+    canvas.fillRect(5, 5, lbWidth, lbHeight);
+    canvas.strokeStyle = 'rgba(44, 44, 44, 0.95)';
+    canvas.strokeRect(5,5, lbWidth, lbHeight);
+    canvas.lineWidth = 5;
+    canvas.font = '20px Hack';
+    canvas.fillStyle = 'rgba(50, 50, 50, 1.0)';
+    canvas.fillText('Leaderboard', 10, 25);
+    canvas.font = '16px Hack';
+    var x = 10;
+    var y = 43;
+    for (leader in cached_leaderboard) {
+        var name = cached_leaderboard[leader].name;
+        var leader_msg = (parseInt(leader) + 1).toString() + '. ' + name + "  Score: " + cached_leaderboard[leader].score;
+        canvas.fillText(leader_msg, x, y);
+        y += 18;
+    }
+    canvas.lineWidth = 1;
+}
+
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------------*/
+/*----------------------------[Animation Functions]---------------------------*/
+/*----------------------------------------------------------------------------*/
 
 function attackAnimation(imgSet, special) {
   if (special) {
@@ -189,7 +170,59 @@ function attackAnimation(imgSet, special) {
   }
 }
 
-function move_character(character, new_x, new_y, viewOrigin) {
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------------*/
+/*---------------------------[Calculation Functions]--------------------------*/
+/*----------------------------------------------------------------------------*/
+
+function transposePoint(x, y, originX, originY, theta) {
+    x = x - originX;
+    y = y - originY;
+    var newX = (Math.cos(theta) * x) - (Math.sin(theta) * y);
+    var newY = (Math.sin(theta) * x) + (Math.cos(theta) * y);
+    return {x: newX + originX, y: newY + originY};
+}
+
+function pointInRange(character, x, y) {
+    var xDistance = x - character.pos.x;
+    var yDistance = y - character.pos.y;
+    var distance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+
+    var character_direction = characterAngle(character);
+    var point_angle = pointToAngle(x, y, character.pos.x, character.pos.y);
+
+    var facing_player = (point_angle >= (character_direction - view_angle));
+    facing_player &= (point_angle <= (character_direction + view_angle));
+
+    return (distance <= view_radius) && facing_player;
+}
+
+function pointToAngle(x, y, originX, originY) {
+    var dx = x - originX;
+    var dy = y - originY;
+    var theta = Math.atan2(dy, dx);
+    if (theta < 0) {
+        theta += (2 * Math.PI);
+    }
+    return theta;
+}
+
+function characterAngle(character) {
+    var mouseX = character.move_to.x;
+    var mouseY = character.move_to.y;
+    return pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y);
+}
+
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------------*/
+/*----------------------------[Movement Functions]----------------------------*/
+/*----------------------------------------------------------------------------*/
+
+function moveCharacter(character, new_x, new_y, viewOrigin) {
     // X
     var viewPortDeltaX = 0;
     if ((new_x >= width-border) && ((viewOrigin.left + width) + (new_x - character.pos.x) < mapWidth) && (character.pos.x < new_x)) {
@@ -264,7 +297,7 @@ function move_character(character, new_x, new_y, viewOrigin) {
 
 }
 
-function move_character_towards_cursor(character, mouseX, mouseY, viewOrigin){
+function moveCharacterTowardsCursor(character, mouseX, mouseY, viewOrigin){
    character.pos.angle = pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y) + deg90
    character.move_to.x = mouseX;
    character.move_to.y = mouseY;
@@ -274,36 +307,27 @@ function move_character_towards_cursor(character, mouseX, mouseY, viewOrigin){
    if (distance > 1) {
         var new_pos_x = character.pos.x + xDistance * 0.015;
         var new_pos_y = character.pos.y + yDistance * 0.015;
-        move_character(character, new_pos_x, new_pos_y, viewOrigin);
+        moveCharacter(character, new_pos_x, new_pos_y, viewOrigin);
    }
 
-}
-
-function pointToAngle(x, y, originX, originY) {
-    var dx = x - originX;
-    var dy = y - originY;
-    var theta = Math.atan2(dy, dx);
-    if (theta < 0) {
-        theta += (2 * Math.PI);
-    }
-    return theta;
-}
-
-function characterAngle(character) {
-    var mouseX = character.move_to.x;
-    var mouseY = character.move_to.y;
-    return pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y);
 }
 
 function moveBackground(canvas, viewOrigin) {
   canvas.style.backgroundPosition = '-' + viewOrigin.left.toString() + 'px -' + viewOrigin.top.toString() + 'px';
 }
 
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------------*/
+/*------------------------------[Game Functions]------------------------------*/
+/*----------------------------------------------------------------------------*/
+
 function resetGame() {
   var setupDiv = document.getElementById('setupDiv');
 
   setupDiv.innerHTML ='<form action="" method="get" id="nameform" align="center"> \
-  Username: <input type="text" name="username" id="username"> \
+  Username: <input maxlength="10" type="text" name="username" id="username"> \
     <input type="button" onclick="loadGame()" value="Start"> \
   </form>';
   var usernameTb = document.getElementById('username');
@@ -326,10 +350,8 @@ function loadGame() {
     var socket  = io.connect();
     var connected = true;
 
-    // set canvas to full browser width/height
-    canvas.width = width;
-    canvas.height = height;
-
+    var specials = [];
+    var viewOrigin = { top:0 , left:0 };
     var character = {
         move_to:{x:0,y:0},
         move: false,
@@ -338,12 +360,8 @@ function loadGame() {
         pos: {x:0, y:0, angle: 0, special:false}
     };
 
-    var specials = {};
-
-    var viewOrigin = {
-        top:0,
-        left:0
-    }
+    canvas.width = width;
+    canvas.height = height;
     username = usernameTb.value;
     setupDiv.innerHTML = '<p align="center">Username: ' + username + '</p>';
 
@@ -351,7 +369,7 @@ function loadGame() {
         var rect = document.getElementById('game').getBoundingClientRect();
         var mouseX = e.clientX - rect.left;
         var mouseY = e.clientY - rect.top;
-        move_character_towards_cursor(character, mouseX, mouseY, viewOrigin);
+        moveCharacterTowardsCursor(character, mouseX, mouseY, viewOrigin);
         character.move = true;
     };
 
@@ -398,34 +416,34 @@ function loadGame() {
         context.strokeStyle = '#000000';
         context.stroke();
 
-        draw_view(context, character);
+        drawView(context, character);
         // Draw myself.
-        draw_turtle(context, character.pos.x, character.pos.y, character.pos.angle, character);
+        drawTurtle(context, character.pos.x, character.pos.y, character.pos.angle, character);
         for (var i in all_characters) {
             other = all_characters[i];
             other.x -= viewOrigin.left;
             other.y -= viewOrigin.top;
-            if (i != character.id && point_in_range(character, other.x, other.y)) {
-                draw_turtle(context, other.x, other.y, other.angle);
+            if (i != character.id && pointInRange(character, other.x, other.y)) {
+                drawTurtle(context, other.x, other.y, other.angle);
             }
             if (i == character.id) {
               scoreBoard.innerHTML = all_characters[i].score.toString();
             }
         }
         for (var j in specials) {
-            special = specials[j];
-            special.x -= viewOrigin.left;
-            special.y -= viewOrigin.top;
-            if (point_in_range(character, special.x, special.y)) {
-              draw_circle(context, special.x, special.y);
+            var specialX = specials[j].x - viewOrigin.left;
+            var specialY = specials[j].y - viewOrigin.top;
+
+            if (pointInRange(character, specialX, specialY)) {
+              drawCircle(context, specialX, specialY);
             }
         }
 
-        draw_leaderboard(context);
+        drawLeaderboard(context);
     });
 
     socket.on('update_leaderboard', function(leaderboard) {
-        cached_board = leaderboard;
+        cached_leaderboard = leaderboard;
     });
 
     socket.on('character_died', function () {
@@ -446,7 +464,7 @@ function loadGame() {
     function mainLoop() {
 
         if (character.move) {
-            move_character_towards_cursor(character,character.move_to.x,character.move_to.y, viewOrigin);
+            moveCharacterTowardsCursor(character,character.move_to.x,character.move_to.y, viewOrigin);
         }
 
         if (character.id) {
@@ -454,8 +472,7 @@ function loadGame() {
                 move_to:{x:character.move_to.x,y:character.move_to.y},
                 move: character.move,
                 id: character.id,
-                name: usernameTb.value,
-                pos: {x:character.pos.x+viewOrigin.left, y:character.pos.y+viewOrigin.top, angle: character.pos.angle, special:character.pos.special}
+                pos: {x:character.pos.x+viewOrigin.left, y:character.pos.y+viewOrigin.top, angle: character.pos.angle, special:character.pos.special, name:character.name}
             };
             socket.emit('move_character', correctedCharacter);
         }
@@ -467,7 +484,7 @@ function loadGame() {
 
 // 1165 // 226
     socket.on('update_specials', function(data) {
-        specials = data;
+      specials = data;
     });
 
     socket.on('init_character', function(data) {
@@ -497,9 +514,13 @@ function loadGame() {
         }
 
         character.pos.angle = data.pos.angle;
-        character.name = usernameTb.value;
+        character.name = username;
         moveBackground(canvas, viewOrigin);
         document.getElementById('enter_sound').play();
+        socket.emit('init_name',character.name);
         mainLoop();
     });
 }
+
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
