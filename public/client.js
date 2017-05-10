@@ -33,6 +33,7 @@ others = normal_img;
 /*------------------------------[Draw Functions]------------------------------*/
 /*----------------------------------------------------------------------------*/
 
+// Draws a circle
 function drawCircle(context, x, y) {
     context.beginPath();
     context.arc(x, y, 10, 0, 2 * Math.PI, false);
@@ -43,6 +44,7 @@ function drawCircle(context, x, y) {
     context.stroke();
 }
 
+// Draws a turtle
 function drawTurtle(context, x, y, angle, character) {
   var turtle_image = img;
   context.save();
@@ -57,6 +59,7 @@ function drawTurtle(context, x, y, angle, character) {
   context.restore();
 }
 
+// Draws the character's view in front of the character
 function drawView(canvas, character) {
     canvas.globalCompositeOperation = "destination-out";
     var mouseX = character.move_to.x;
@@ -98,6 +101,7 @@ function drawView(canvas, character) {
     canvas.globalCompositeOperation = "source-over";
 }
 
+// Draws the leaderboard on the canvas
 function drawLeaderboard(canvas) {
     if (cached_leaderboard.length == 0) {
         return;
@@ -133,6 +137,7 @@ function drawLeaderboard(canvas) {
 /*----------------------------[Animation Functions]---------------------------*/
 /*----------------------------------------------------------------------------*/
 
+// Animates the attack sequence
 function attackAnimation(imgSet, special) {
   if (special) {
     if (imgSet == 0) {
@@ -177,6 +182,7 @@ function attackAnimation(imgSet, special) {
 /*---------------------------[Calculation Functions]--------------------------*/
 /*----------------------------------------------------------------------------*/
 
+// Transposes a point
 function transposePoint(x, y, originX, originY, theta) {
     x = x - originX;
     y = y - originY;
@@ -185,7 +191,8 @@ function transposePoint(x, y, originX, originY, theta) {
     return {x: newX + originX, y: newY + originY};
 }
 
-function pointInRange(character, x, y) {
+// Checks if a point is in range of the character
+function checkPointInRange(character, x, y) {
     var xDistance = x - character.pos.x;
     var yDistance = y - character.pos.y;
     var distance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
@@ -199,6 +206,7 @@ function pointInRange(character, x, y) {
     return (distance <= view_radius) && facing_player;
 }
 
+// Calculates the angle from one point to another
 function pointToAngle(x, y, originX, originY) {
     var dx = x - originX;
     var dy = y - originY;
@@ -209,6 +217,7 @@ function pointToAngle(x, y, originX, originY) {
     return theta;
 }
 
+// Returns the angle that the character should be facing
 function characterAngle(character) {
     var mouseX = character.move_to.x;
     var mouseY = character.move_to.y;
@@ -222,6 +231,7 @@ function characterAngle(character) {
 /*----------------------------[Movement Functions]----------------------------*/
 /*----------------------------------------------------------------------------*/
 
+// Moves the character and/or the viewOrigin by a certain amount
 function moveCharacter(character, new_x, new_y, viewOrigin) {
     // X
     var viewPortDeltaX = 0;
@@ -297,6 +307,7 @@ function moveCharacter(character, new_x, new_y, viewOrigin) {
 
 }
 
+// Moves the character towards the mouse pointer
 function moveCharacterTowardsCursor(character, mouseX, mouseY, viewOrigin){
    character.pos.angle = pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y) + deg90
    character.move_to.x = mouseX;
@@ -312,6 +323,7 @@ function moveCharacterTowardsCursor(character, mouseX, mouseY, viewOrigin){
 
 }
 
+// Moves the background image with the viewOrigin
 function moveBackground(canvas, viewOrigin) {
   canvas.style.backgroundPosition = '-' + viewOrigin.left.toString() + 'px -' + viewOrigin.top.toString() + 'px';
 }
@@ -323,6 +335,7 @@ function moveBackground(canvas, viewOrigin) {
 /*------------------------------[Game Functions]------------------------------*/
 /*----------------------------------------------------------------------------*/
 
+// Reset the game
 function resetGame() {
   var setupDiv = document.getElementById('setupDiv');
 
@@ -334,14 +347,16 @@ function resetGame() {
   usernameTb.value = username;
 }
 
+// Checks if character has special
 function checkSpecial(character) {
   if (character.pos.special) {
     img = special_img;
   }
 }
 
+// Loads the game and main function for the game operations
 function loadGame() {
-    // get canvas element and create context
+    // Global Game Variables
     var setupDiv = document.getElementById('setupDiv');
     var usernameTb = document.getElementById('username');
     var canvas  = document.getElementById('game');
@@ -360,11 +375,13 @@ function loadGame() {
         pos: {x:0, y:0, angle: 0, special:false}
     };
 
+    // Setting up Canvas and HTML page
     canvas.width = width;
     canvas.height = height;
     username = usernameTb.value;
     setupDiv.innerHTML = '<p align="center">Username: ' + username + '</p>';
 
+    // Character Attack Detection
     canvas.onmousemove = function(e) {
         var rect = document.getElementById('game').getBoundingClientRect();
         var mouseX = e.clientX - rect.left;
@@ -373,6 +390,7 @@ function loadGame() {
         character.move = true;
     };
 
+    // Character Move Detection
     canvas.onmousedown = function(e) {
         var rect = document.getElementById('game').getBoundingClientRect();
 
@@ -405,7 +423,7 @@ function loadGame() {
         document.getElementById('attack_sound').play();
     };
 
-    // draw line received from server
+    // Handler for updating character information of other players
     socket.on('update_characters', function (all_characters) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         canvas.lineWidth = 1;
@@ -416,36 +434,41 @@ function loadGame() {
         context.strokeStyle = '#000000';
         context.stroke();
 
+        // Draws the view in front of the character
         drawView(context, character);
-        // Draw myself.
+        // Draws the player
         drawTurtle(context, character.pos.x, character.pos.y, character.pos.angle, character);
+        // Draws other players if they are in the view
         for (var i in all_characters) {
             other = all_characters[i];
             other.x -= viewOrigin.left;
             other.y -= viewOrigin.top;
-            if (i != character.id && pointInRange(character, other.x, other.y)) {
+            if (i != character.id && checkPointInRange(character, other.x, other.y)) {
                 drawTurtle(context, other.x, other.y, other.angle);
             }
             if (i == character.id) {
               scoreBoard.innerHTML = all_characters[i].score.toString();
             }
         }
+        // Draws specials if they are in the view
         for (var j in specials) {
             var specialX = specials[j].x - viewOrigin.left;
             var specialY = specials[j].y - viewOrigin.top;
 
-            if (pointInRange(character, specialX, specialY)) {
+            if (checkPointInRange(character, specialX, specialY)) {
               drawCircle(context, specialX, specialY);
             }
         }
-
+        // Draws the leaderboard
         drawLeaderboard(context);
     });
 
+    // Handler for updating the leaderboard
     socket.on('update_leaderboard', function(leaderboard) {
         cached_leaderboard = leaderboard;
     });
 
+    // Handler when character gets killed
     socket.on('character_died', function () {
         resetGame();
         connected = false;
@@ -455,18 +478,21 @@ function loadGame() {
         document.getElementById('death_sound').play();
     });
 
+    // Handler for special detection
     socket.on('got_special', function () {
         character.pos.special = true;
         setTimeout(function() {checkSpecial(character)}, 300);
     });
 
-    // main loop, running every 25ms
+    // Main Loop that runs every 25ms (40fps)
     function mainLoop() {
 
+        // Moves the character
         if (character.move) {
             moveCharacterTowardsCursor(character,character.move_to.x,character.move_to.y, viewOrigin);
         }
 
+        // Transmit character movement to server
         if (character.id) {
             var correctedCharacter = {
                 move_to:{x:character.move_to.x,y:character.move_to.y},
@@ -477,16 +503,18 @@ function loadGame() {
             socket.emit('move_character', correctedCharacter);
         }
 
+        // Cycle the loop if connected
         if (connected) {
           setTimeout(mainLoop, 25);
         }
     }
 
-// 1165 // 226
+    // Handler for updating specials' locations
     socket.on('update_specials', function(data) {
       specials = data;
     });
 
+    // Handler for initializing the character on connect and starts Main Loop
     socket.on('init_character', function(data) {
         character.id = data.id;
         if (data.pos.x < width/2) {
