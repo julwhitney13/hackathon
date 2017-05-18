@@ -5,7 +5,19 @@
 var express = require('express'),
     app = express(),
     http = require('http'),
-    socketIo = require('socket.io');
+    socketIo = require('socket.io'),
+    winston = require('winston');
+
+// Logging to file
+winston.add(
+  winston.transports.File, {
+    filename: 'server.log',
+    level: 'info',
+    json: true,
+    eol: '\n', // 'rn' for Windows, or `eol: ‘n’,` for *NIX OSs
+    timestamp: true
+  }
+);
 
 // WebServer setup
 var server =  http.createServer(app);
@@ -27,7 +39,7 @@ var leaderboard = [];
 server.listen(8080);
 // Add directory with our static files
 app.use(express.static(__dirname + '/public'));
-console.log("Server running on 127.0.0.1:8080");
+winston.info("Server started and running on 127.0.0.1:8080");
 
 /*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
@@ -69,7 +81,7 @@ function moveCharacter(data) {
     }
   }
   catch(error) {
-    console.log("[ERROR] Function moveCharacter with error: " + error.message);
+    winston.error("Function moveCharacter with error: " + error.message);
   }
 }
 
@@ -80,7 +92,6 @@ function checkHit(attackData, object) {
     var attackRadius = 40;
     var hit = false;
     if (attackData.type == 'B') {
-      console.log(characterInformation[attackData.id].name + " used a special!");
       attackRadius = 80;
     }
 
@@ -90,7 +101,7 @@ function checkHit(attackData, object) {
     return hit;
   }
   catch (error) {
-    console.log("[ERROR] Function checkHit with error: " + error.message);
+    winston.error("Function checkHit with error: " + error.message);
   }
 
 }
@@ -109,6 +120,7 @@ function checkHitSpecial(attackData, socket) {
 
     if (gotSpecials.length > 0) {
       socket.emit('got_special','');
+      winston.info("Socket id: " + socket.id + " with name: " + characterInformation[socket.id].name + " has gotten a special.");
     }
     for (var j=0; j < gotSpecials.length; j++) {
       specials.splice(gotSpecials[j],1);
@@ -116,7 +128,7 @@ function checkHitSpecial(attackData, socket) {
     }
   }
   catch(error) {
-    console.log("[ERROR] Function checkHitSpecial with error: " + error.message);
+    winston.error("Function checkHitSpecial with error: " + error.message);
   }
 }
 
@@ -137,11 +149,11 @@ function checkHitCharacter(attackData, socket) {
 
     if (characterInformation.hasOwnProperty(attackData.id)) {
       characterInformation[attackData.id].score += killedCharacters.length;
-      console.log(characterInformation[attackData.id].name + " has attacked and killed " + killedCharacters.length.toString() + " turtles.");
+      winston.info("Socket id: " + socket.id + " with name: " + characterInformation[attackData.id].name + " has attacked and killed " + killedCharacters.length.toString() + " turtles.");
     }
   }
   catch(error) {
-    console.log("[ERROR] Function checkHitCharacter with error: " + error.message);
+    winston.error("Function checkHitCharacter with error: " + error.message);
   }
 }
 
@@ -157,13 +169,14 @@ io.on('connection', function (socket) {
 
   // Initialization steps of character creation and sending leaderboard/character/specials information
   try {
-    characterInformation[socket.id] = {x: Math.floor((Math.random()*2350)+25), y: Math.floor((Math.random()*1150)+25), score:0, angle:0, special:false, name:socket.id};
+    characterInformation[socket.id] = {x: Math.floor((Math.random()*2350)+25), y: Math.floor((Math.random()*1150)+25), score:0, angle:0, special:false, name:socket.id, socketId:socket.id};
     socket.emit('init_character', {id: socket.id, pos: characterInformation[socket.id]});
     socket.emit('update_characters', characterInformation);
     socket.emit('update_specials', specials);
+    winston.info("Socket function 'connection' successful for socket id: " + socket.id);
   }
   catch (error) {
-    console.log("[ERROR] Socket function 'connection' with error: " + error.message);
+    winston.error("Socket function 'connection' with error: " + error.message);
   }
 
    // Handler for updating character movement
@@ -175,6 +188,9 @@ io.on('connection', function (socket) {
    socket.on('attack', function(attackData) {
      checkHitCharacter(attackData, socket);
      checkHitSpecial(attackData, socket);
+     if (attackData.type == 'B') {
+        winston.info("Socket id: " + attackData.id + " with name: " + characterInformation[attackData.id].name + " used a special!");
+     }
    });
 
    // Handler for initial name tagging
@@ -182,6 +198,7 @@ io.on('connection', function (socket) {
      if (characterInformation.hasOwnProperty(socket.id)) {
        characterInformation[socket.id].name = name;
        updateLeaderboard();
+       winston.info("Socket function 'init_name' successful for socket id: " + socket.id + " and with name: " + name);
      }
    });
 
@@ -189,6 +206,7 @@ io.on('connection', function (socket) {
    socket.on('disconnect', function() {
      delete characterInformation[socket.id];
      updateLeaderboard();
+     winston.info("Socket function 'disconnect' successful for socket id: " + socket.id);
    });
 });
 
@@ -202,8 +220,10 @@ io.on('connection', function (socket) {
 // Creates a special every 10 seconds if less than 5 exists on the map
 function createSpecial() {
   if (specials.length < 5) {
-    specials.push({x:Math.floor((Math.random()*2350)+25) , y: Math.floor((Math.random()*1150)+25)});
+    var newSpecial = {x:Math.floor((Math.random()*2350)+25) , y: Math.floor((Math.random()*1150)+25)};
+    specials.push(newSpecial);
     io.emit('update_specials', specials);
+    winston.info("Function createSpecial successful with special created at ( x: " + newSpecial.x.toString() + ", y: " + newSpecial.y.toString() + " )");
   }
   setTimeout(createSpecial, 10000);
 }

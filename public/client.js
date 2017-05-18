@@ -1,15 +1,15 @@
 var img = new Image();
 var others = new Image();
-var normal_img= new Image();
-var attack_img_a = new Image();
-var attack_img_b = new Image();
-var special_img = new Image();
-var special_attack_img_a = new Image();
-var special_attack_img_b = new Image();
+var normalImg= new Image();
+var attackImgA = new Image();
+var attackImgB = new Image();
+var specialImg = new Image();
+var specialAttackImgA = new Image();
+var specialAttackImgB = new Image();
 
-var view_radius = 130;
-var view_angle = Math.PI * 0.33;
-var cached_leaderboard = [];
+var viewRadius = 200;
+var viewAngle = Math.PI * 0.33;
+var cachedLeaderboard = [];
 
 const width = 1200;
 const height = 600;
@@ -20,14 +20,14 @@ const border = 200;
 const mapWidth = 2400;
 const mapHeight = 1200;
 var username = "";
-normal_img.src = "image/1.png";
-attack_img_a.src = "image/2.png";
-attack_img_b.src = "image/3.png";
-special_img.src = "image/s1.png";
-special_attack_img_a.src = "image/s2.png";
-special_attack_img_b.src = "image/s3.png";
-img = normal_img;
-others = normal_img;
+normalImg.src = "image/1.png";
+attackImgA.src = "image/2.png";
+attackImgB.src = "image/3.png";
+specialImg.src = "image/s1.png";
+specialAttackImgA.src = "image/s2.png";
+specialAttackImgB.src = "image/s3.png";
+img = normalImg;
+others = normalImg;
 
 /*----------------------------------------------------------------------------*/
 /*------------------------------[Draw Functions]------------------------------*/
@@ -46,7 +46,13 @@ function drawCircle(context, x, y) {
 
 // Draws a turtle
 function drawTurtle(context, x, y, angle, character) {
-  var turtle_image = img;
+  if (character) {
+      var turtleImage = img;
+  }
+  else {
+      var turtleImage = normalImg;
+  }
+
   context.save();
 
   //Set the origin to the center of the image
@@ -54,7 +60,7 @@ function drawTurtle(context, x, y, angle, character) {
   //Rotate the canvas around the origin
   context.rotate(angle);
   //draw the image
-  context.drawImage(turtle_image,imageWidth / 2 * (-1),imageHeight / 2 * (-1),imageWidth,imageHeight);
+  context.drawImage(turtleImage,imageWidth / 2 * (-1),imageHeight / 2 * (-1),imageWidth,imageHeight);
 
   context.restore();
 }
@@ -62,9 +68,9 @@ function drawTurtle(context, x, y, angle, character) {
 // Draws the character's view in front of the character
 function drawView(canvas, character) {
     canvas.globalCompositeOperation = "destination-out";
-    var mouseX = character.move_to.x;
-    var mouseY = character.move_to.y;
-    var character_direction = characterAngle(character);
+    var mouseX = character.moveTo.x;
+    var mouseY = character.moveTo.y;
+    var characterDirection = characterAngle(character);
 
     var w = mouseX - character.pos.x;
     var h = mouseY - character.pos.y;
@@ -73,18 +79,18 @@ function drawView(canvas, character) {
     var xratio = w / hypo;
     var yratio = h / hypo;
 
-    var arcCenterX = character.pos.x + (xratio * view_radius);
-    var arcCenterY = character.pos.y + (yratio * view_radius);
+    var arcCenterX = character.pos.x + (xratio * viewRadius);
+    var arcCenterY = character.pos.y + (yratio * viewRadius);
 
-    var arcS = character_direction - view_angle;
-    var arcE = character_direction + view_angle;
+    var arcS = characterDirection - viewAngle;
+    var arcE = characterDirection + viewAngle;
 
-    var left = transposePoint(arcCenterX, arcCenterY, character.pos.x, character.pos.y, view_angle);
-    var right = transposePoint(arcCenterX, arcCenterY, character.pos.x, character.pos.y, -view_angle);
+    var left = transposePoint(arcCenterX, arcCenterY, character.pos.x, character.pos.y, viewAngle);
+    var right = transposePoint(arcCenterX, arcCenterY, character.pos.x, character.pos.y, -viewAngle);
 
     canvas.beginPath();
-    canvas.arc(character.pos.x, character.pos.y, view_radius, arcS, arcE, false);
-    var grd=canvas.createRadialGradient(character.pos.x,character.pos.y,view_radius * 0.90, character.pos.x,character.pos.y,view_radius);
+    canvas.arc(character.pos.x, character.pos.y, viewRadius, arcS, arcE, false);
+    var grd=canvas.createRadialGradient(character.pos.x,character.pos.y,viewRadius * 0.90, character.pos.x,character.pos.y,viewRadius);
     grd.addColorStop(0,"#ccff00");
     grd.addColorStop(1,"transparent");
 
@@ -102,32 +108,38 @@ function drawView(canvas, character) {
 }
 
 // Draws the leaderboard on the canvas
-function drawLeaderboard(canvas) {
-    if (cached_leaderboard.length == 0) {
+function drawLeaderboard(context, character) {
+    if (cachedLeaderboard.length == 0) {
         return;
     }
 
-    var lbHeight = (cached_leaderboard.length * 18) + 29;
+    var lbHeight = (cachedLeaderboard.length * 18) + 29;
     var lbWidth = 250;
 
-    canvas.fillStyle = 'rgba(240, 240, 240, 0.6)';
-    canvas.fillRect(5, 5, lbWidth, lbHeight);
-    canvas.strokeStyle = 'rgba(44, 44, 44, 0.95)';
-    canvas.strokeRect(5,5, lbWidth, lbHeight);
-    canvas.lineWidth = 5;
-    canvas.font = '20px Hack';
-    canvas.fillStyle = 'rgba(50, 50, 50, 1.0)';
-    canvas.fillText('Leaderboard', 10, 25);
-    canvas.font = '16px Hack';
+    context.fillStyle = 'rgba(240, 240, 240, 0.6)';
+    context.fillRect(5, 5, lbWidth, lbHeight);
+    context.strokeStyle = 'rgba(44, 44, 44, 0.95)';
+    context.strokeRect(5,5, lbWidth, lbHeight);
+    context.lineWidth = 5;
+    context.font = '20px Hack';
+    context.fillStyle = 'rgba(50, 50, 50, 1.0)';
+    context.fillText('Leaderboard', 10, 25);
+    context.font = '16px Hack';
     var x = 10;
     var y = 43;
-    for (leader in cached_leaderboard) {
-        var name = cached_leaderboard[leader].name;
-        var leader_msg = (parseInt(leader) + 1).toString() + '. ' + name + "  Score: " + cached_leaderboard[leader].score;
-        canvas.fillText(leader_msg, x, y);
+    for (leader in cachedLeaderboard) {
+        var name = cachedLeaderboard[leader].name;
+        if (cachedLeaderboard[leader].socketId == character.id) {
+            context.font = 'bold 16px Hack';
+        }
+        else {
+          context.font = '16px Hack';
+        }
+        var leaderboardLine = (parseInt(leader) + 1).toString() + '. ' + name + "  Score: " + cachedLeaderboard[leader].score;
+        context.fillText(leaderboardLine, x, y);
         y += 18;
     }
-    canvas.lineWidth = 1;
+    context.lineWidth = 1;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -141,36 +153,36 @@ function drawLeaderboard(canvas) {
 function attackAnimation(imgSet, special) {
   if (special) {
     if (imgSet == 0) {
-      img = special_attack_img_a;
+      img = specialAttackImgA;
       setTimeout(function() {attackAnimation(1, special)}, 100);
     }
     else if (imgSet == 1) {
-      img = special_attack_img_b;
+      img = specialAttackImgB;
       setTimeout(function() {attackAnimation(2, special)}, 100);
     }
     else if (imgSet == 2){
-      img = special_attack_img_a;
+      img = specialAttackImgA;
       setTimeout(function() {attackAnimation(3, special)}, 100);
     }
     else {
-      img = normal_img;
+      img = normalImg;
     }
   }
   else {
     if (imgSet == 0) {
-      img = attack_img_a;
+      img = attackImgA;
       setTimeout(function() {attackAnimation(1, special)}, 100);
     }
     else if (imgSet == 1) {
-      img = attack_img_b;
+      img = attackImgB;
       setTimeout(function() {attackAnimation(2, special)}, 100);
     }
     else if (imgSet == 2){
-      img = attack_img_a;
+      img = attackImgA;
       setTimeout(function() {attackAnimation(3, special)}, 100);
     }
     else {
-      img = normal_img;
+      img = normalImg;
     }
   }
 }
@@ -191,19 +203,25 @@ function transposePoint(x, y, originX, originY, theta) {
     return {x: newX + originX, y: newY + originY};
 }
 
+// Checks if the angle is in range of the view
+function checkAngleInRange(pointAngle, character) {
+    var characterDirection = characterAngle(character);
+    var inRange = false;
+    if ((Math.abs(pointAngle - characterDirection) <= viewAngle) || (Math.abs(pointAngle - (characterDirection + 2 * Math.PI)) <= viewAngle) || (Math.abs(pointAngle - (characterDirection - 2 * Math.PI)) <= viewAngle)) {
+      inRange = true;
+    }
+    return inRange;
+}
+
 // Checks if a point is in range of the character
 function checkPointInRange(character, x, y) {
     var xDistance = x - character.pos.x;
     var yDistance = y - character.pos.y;
-    var distance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
-
-    var character_direction = characterAngle(character);
-    var point_angle = pointToAngle(x, y, character.pos.x, character.pos.y);
-
-    var facing_player = (point_angle >= (character_direction - view_angle));
-    facing_player &= (point_angle <= (character_direction + view_angle));
-
-    return (distance <= view_radius) && facing_player;
+    var distance = Math.sqrt(xDistance * xDistance + yDistance * yDistance)
+    var pointAngle = pointToAngle(x, y, character.pos.x, character.pos.y);
+    var distanceInRange = (distance <= viewRadius);
+    var angleInRange = checkAngleInRange(pointAngle, character)
+    return distanceInRange && angleInRange;
 }
 
 // Calculates the angle from one point to another
@@ -219,8 +237,8 @@ function pointToAngle(x, y, originX, originY) {
 
 // Returns the angle that the character should be facing
 function characterAngle(character) {
-    var mouseX = character.move_to.x;
-    var mouseY = character.move_to.y;
+    var mouseX = character.moveTo.x;
+    var mouseY = character.moveTo.y;
     return pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y);
 }
 
@@ -232,76 +250,76 @@ function characterAngle(character) {
 /*----------------------------------------------------------------------------*/
 
 // Moves the character and/or the viewOrigin by a certain amount
-function moveCharacter(character, new_x, new_y, viewOrigin) {
+function moveCharacter(character, newX, newY, viewOrigin) {
     // X
     var viewPortDeltaX = 0;
-    if ((new_x >= width-border) && ((viewOrigin.left + width) + (new_x - character.pos.x) < mapWidth) && (character.pos.x < new_x)) {
-        viewPortDeltaX = new_x - character.pos.x;
+    if ((newX >= width-border) && ((viewOrigin.left + width) + (newX - character.pos.x) < mapWidth) && (character.pos.x < newX)) {
+        viewPortDeltaX = newX - character.pos.x;
         character.pos.x = width-border;
         viewOrigin.left += viewPortDeltaX;
-        character.move_to.x -= viewPortDeltaX;
+        character.moveTo.x -= viewPortDeltaX;
     }
-    else if ((new_x <= border) && ((viewOrigin.left - (character.pos.x - new_x)) > 0) && (character.pos.x > new_x)) {
-        viewPortDeltaX = character.pos.x - new_x;
+    else if ((newX <= border) && ((viewOrigin.left - (character.pos.x - newX)) > 0) && (character.pos.x > newX)) {
+        viewPortDeltaX = character.pos.x - newX;
         character.pos.x = border;
         viewOrigin.left -= viewPortDeltaX;
-        character.move_to.x += viewPortDeltaX;
+        character.moveTo.x += viewPortDeltaX;
     }
-    else if ((new_x >= width-border) && ((viewOrigin.left + width) + (new_x - character.pos.x) >= mapWidth)) {
+    else if ((newX >= width-border) && ((viewOrigin.left + width) + (newX - character.pos.x) >= mapWidth)) {
         viewPortDeltaX = (mapWidth - width) - viewOrigin.left;
-        character.pos.x += (new_x - character.pos.x) - viewPortDeltaX;
+        character.pos.x += (newX - character.pos.x) - viewPortDeltaX;
         viewOrigin.left = mapWidth - width;
-        character.move_to.x -= viewPortDeltaX;
+        character.moveTo.x -= viewPortDeltaX;
     }
-    else if ((new_x <= border) && (viewOrigin.left - (character.pos.x - new_x) <= 0)) {
+    else if ((newX <= border) && (viewOrigin.left - (character.pos.x - newX) <= 0)) {
         viewPortDeltaX = viewOrigin.left;
-        character.pos.x = new_x - viewOrigin.left;
+        character.pos.x = newX - viewOrigin.left;
         viewOrigin.left = 0;
-        character.move_to.x += viewPortDeltaX;
+        character.moveTo.x += viewPortDeltaX;
     }
-    else if ((new_x < width) && (new_x > 0)) {
-      character.pos.x = new_x;
+    else if ((newX < width) && (newX > 0)) {
+      character.pos.x = newX;
     }
-    else if (new_x <= 0) {
+    else if (newX <= 0) {
         character.pos.x = 0;
     }
-    else if (new_x >= width) {
+    else if (newX >= width) {
         character.pos.x = width;
     }
 
     // Y
     var viewPortDeltaY = 0;
-    if ((new_y >= height-border) && ((viewOrigin.top + height) + (new_y - character.pos.y) < mapHeight) && (character.pos.y < new_y)) {
-        viewPortDeltaY = new_y - character.pos.y;
+    if ((newY >= height-border) && ((viewOrigin.top + height) + (newY - character.pos.y) < mapHeight) && (character.pos.y < newY)) {
+        viewPortDeltaY = newY - character.pos.y;
         character.pos.y = height-border;
         viewOrigin.top += viewPortDeltaY;
-        character.move_to.y -= viewPortDeltaY;
+        character.moveTo.y -= viewPortDeltaY;
     }
-    else if ((new_y <= border) && ((viewOrigin.top - (character.pos.y - new_y)) > 0) && (character.pos.y > new_y)) {
-        viewPortDeltaY = character.pos.y - new_y;
+    else if ((newY <= border) && ((viewOrigin.top - (character.pos.y - newY)) > 0) && (character.pos.y > newY)) {
+        viewPortDeltaY = character.pos.y - newY;
         character.pos.y = border;
         viewOrigin.top -= viewPortDeltaY;
-        character.move_to.y += viewPortDeltaY;
+        character.moveTo.y += viewPortDeltaY;
     }
-    else if ((new_y >= height-border) && ((viewOrigin.top + height) + (new_y - character.pos.y) >= mapHeight)) {
+    else if ((newY >= height-border) && ((viewOrigin.top + height) + (newY - character.pos.y) >= mapHeight)) {
         viewPortDeltaY = (mapHeight - height) - viewOrigin.top;
-        character.pos.y += (new_y - character.pos.y) - viewPortDeltaY;
+        character.pos.y += (newY - character.pos.y) - viewPortDeltaY;
         viewOrigin.top = mapHeight - height;
-        character.move_to.y -= viewPortDeltaY;
+        character.moveTo.y -= viewPortDeltaY;
     }
-    else if ((new_y <= border) && (viewOrigin.top - (character.pos.y - new_y) <= 0)) {
+    else if ((newY <= border) && (viewOrigin.top - (character.pos.y - newY) <= 0)) {
         viewPortDeltaY = viewOrigin.top;
-        character.pos.y = new_y - viewOrigin.top;
+        character.pos.y = newY - viewOrigin.top;
         viewOrigin.top = 0;
-        character.move_to.y += viewPortDeltaY;
+        character.moveTo.y += viewPortDeltaY;
     }
-    else if ((new_y < height) && (new_y > 0)) {
-      character.pos.y = new_y;
+    else if ((newY < height) && (newY > 0)) {
+      character.pos.y = newY;
     }
-    else if (new_y <= 0) {
+    else if (newY <= 0) {
         character.pos.y = 0;
     }
-    else if (new_y >= height) {
+    else if (newY >= height) {
         character.pos.y = height;
     }
 
@@ -309,16 +327,22 @@ function moveCharacter(character, new_x, new_y, viewOrigin) {
 
 // Moves the character towards the mouse pointer
 function moveCharacterTowardsCursor(character, mouseX, mouseY, viewOrigin){
-   character.pos.angle = pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y) + deg90
-   character.move_to.x = mouseX;
-   character.move_to.y = mouseY;
+   const speedLimit = 4.5;
+   const minDistance = 10;
    var xDistance = mouseX - character.pos.x;
    var yDistance = mouseY - character.pos.y;
-   var distance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
-   if (distance > 1) {
-        var new_pos_x = character.pos.x + xDistance * 0.015;
-        var new_pos_y = character.pos.y + yDistance * 0.015;
-        moveCharacter(character, new_pos_x, new_pos_y, viewOrigin);
+   var xDelta = xDistance * 0.015;
+   var yDelta = yDistance * 0.015;
+   var velocity = Math.sqrt(xDelta*xDelta + yDelta*yDelta);
+   if (velocity > speedLimit) {
+     var factor = velocity/speedLimit;
+     xDelta = xDelta/factor;
+     yDelta = yDelta/factor;
+   }
+   if (Math.abs(xDistance) + Math.abs(yDistance) > minDistance) {
+        var newX = character.pos.x + xDelta;
+        var newY = character.pos.y + yDelta;
+        moveCharacter(character, newX, newY, viewOrigin);
    }
 
 }
@@ -350,7 +374,7 @@ function resetGame() {
 // Checks if character has special
 function checkSpecial(character) {
   if (character.pos.special) {
-    img = special_img;
+    img = specialImg;
   }
 }
 
@@ -368,7 +392,7 @@ function loadGame() {
     var specials = [];
     var viewOrigin = { top:0 , left:0 };
     var character = {
-        move_to:{x:0,y:0},
+        moveTo:{x:0,y:0},
         move: false,
         name: false,
         id: false,
@@ -386,7 +410,10 @@ function loadGame() {
         var rect = document.getElementById('game').getBoundingClientRect();
         var mouseX = e.clientX - rect.left;
         var mouseY = e.clientY - rect.top;
-        moveCharacterTowardsCursor(character, mouseX, mouseY, viewOrigin);
+        character.pos.angle = pointToAngle(mouseX, mouseY, character.pos.x, character.pos.y) + deg90
+        character.moveTo.x = mouseX;
+        character.moveTo.y = mouseY;
+        //moveCharacterTowardsCursor(character, mouseX, mouseY, viewOrigin);
         character.move = true;
     };
 
@@ -396,7 +423,7 @@ function loadGame() {
 
         var mouseX = e.clientX - rect.left;
         var mouseY = e.clientY - rect.top;
-        var attack_radius = 80.0;
+        var strikeDistance = 80.0;
         var w = mouseX - character.pos.x;
         var h = mouseY - character.pos.y;
         var hypo = Math.sqrt((w * w) + (h * h));
@@ -404,12 +431,12 @@ function loadGame() {
         var xratio = w / hypo;
         var yratio = h / hypo;
 
-        var attackX = character.pos.x + (xratio * attack_radius);
-        var attackY = character.pos.y + (yratio * attack_radius);
+        var attackX = character.pos.x + (xratio * strikeDistance);
+        var attackY = character.pos.y + (yratio * strikeDistance);
 
-        var attack_position = {x: attackX+viewOrigin.left, y: attackY+viewOrigin.top};
+        var attackPosition = {x: attackX+viewOrigin.left, y: attackY+viewOrigin.top};
 
-        var attack = {id: character.id, attack: attack_position, type: 'A'};
+        var attack = {id: character.id, attack: attackPosition, type: 'A'};
         if (character.pos.special) {
             attack.type = 'B';
             character.pos.special = false;
@@ -424,7 +451,7 @@ function loadGame() {
     };
 
     // Handler for updating character information of other players
-    socket.on('update_characters', function (all_characters) {
+    socket.on('update_characters', function (allCharacters) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         canvas.lineWidth = 1;
         moveBackground(canvas,viewOrigin);
@@ -439,15 +466,15 @@ function loadGame() {
         // Draws the player
         drawTurtle(context, character.pos.x, character.pos.y, character.pos.angle, character);
         // Draws other players if they are in the view
-        for (var i in all_characters) {
-            other = all_characters[i];
+        for (var i in allCharacters) {
+            other = allCharacters[i];
             other.x -= viewOrigin.left;
             other.y -= viewOrigin.top;
             if (i != character.id && checkPointInRange(character, other.x, other.y)) {
                 drawTurtle(context, other.x, other.y, other.angle);
             }
             if (i == character.id) {
-              scoreBoard.innerHTML = all_characters[i].score.toString();
+              scoreBoard.innerHTML = allCharacters[i].score.toString();
             }
         }
         // Draws specials if they are in the view
@@ -460,12 +487,12 @@ function loadGame() {
             }
         }
         // Draws the leaderboard
-        drawLeaderboard(context);
+        drawLeaderboard(context, character);
     });
 
     // Handler for updating the leaderboard
     socket.on('update_leaderboard', function(leaderboard) {
-        cached_leaderboard = leaderboard;
+        cachedLeaderboard = leaderboard;
     });
 
     // Handler when character gets killed
@@ -489,13 +516,13 @@ function loadGame() {
 
         // Moves the character
         if (character.move) {
-            moveCharacterTowardsCursor(character,character.move_to.x,character.move_to.y, viewOrigin);
+            moveCharacterTowardsCursor(character,character.moveTo.x,character.moveTo.y, viewOrigin);
         }
 
         // Transmit character movement to server
         if (character.id) {
             var correctedCharacter = {
-                move_to:{x:character.move_to.x,y:character.move_to.y},
+                moveTo:{x:character.moveTo.x,y:character.moveTo.y},
                 move: character.move,
                 id: character.id,
                 pos: {x:character.pos.x+viewOrigin.left, y:character.pos.y+viewOrigin.top, angle: character.pos.angle, special:character.pos.special, name:character.name}
@@ -505,7 +532,7 @@ function loadGame() {
 
         // Cycle the loop if connected
         if (connected) {
-          setTimeout(mainLoop, 25);
+          setTimeout(mainLoop, 10);
         }
     }
 
